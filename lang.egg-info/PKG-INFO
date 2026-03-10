@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: lang
+Version: 0.1.0
+Summary: 我的 Java 風格 Python 專案
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: Flask>=3.0

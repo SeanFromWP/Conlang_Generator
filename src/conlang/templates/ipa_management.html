@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+
+{% block page_name %}
+    <span data-i18n="nav_ipa_management"></span>
+{% endblock %}
+
+{% block actions %}
+    <button type="submit" form="main-form" class="btn btn-save">
+        <span data-i18n="btn_save_config"></span>
+    </button>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+{% endblock %}
+
+{% block content %}
+
+    <form id="main-form" method="POST" action="ipa_management">
+        <input type="hidden" name="custom_order_data" id="hiddenCustomOrder" 
+               value="{{ config.phonology.custom_order | default('') }}">
+
+        <div class="tabs">
+            <button type="button" class="tab-btn" data-type="overall" onclick="switchMainTab('overall')">
+                <span data-i18n="label_overall"></span>
+            </button>
+            <button type="button" class="tab-btn" data-type="category" onclick="switchMainTab('category')">
+                <span data-i18n="label_ipa_categories"></span>
+            </button>
+            <button type="button" class="tab-btn" data-type="consonant" onclick="switchMainTab('consonant')">
+                <span data-i18n="ipa_consonants"></span>
+            </button>
+            <button type="button" class="tab-btn" data-type="vowel" onclick="switchMainTab('vowel')">
+                <span data-i18n="ipa_vowels"></span>
+            </button>
+        </div>
+
+        <div id="category-tab" class="tab-content">
+            <div class="config-panel card">
+                <div class="section-header" style="margin-top:0;">
+                    <h2 data-i18n="label_ipa_custom_categories"></h2>
+                </div>
+                <p class="label-caps" style="margin-bottom:15px;">先點擊一個類別進行「編輯」，然後在下方列表點擊 IPA 符號來加入或移除。</p>
+                
+                <div id="category-list"></div>
+
+                <button type="button" class="btn btn-outline" onclick="addNewCategory()" style="margin-top:10px;">
+                    <span data-i18n="btn_add_category"></span>
+                </button>
+                
+                <input type="hidden" name="custom_categories_json" id="hiddenCategoriesJson" 
+                    value='{{ config.phonology.categories | tojson | safe if config.phonology.categories else "{}" }}'>
+            </div>
+
+            <div class="group-header">快速選取清單</div>
+            <div id="category-picker-area"></div>
+        </div>
+
+        <div id="overall-tab" class="tab-content">
+            <div class="config-panel">
+                <span class="label-caps" data-i18n="label_sort"></span>
+                <div id="sort-pool" class="sort-pool"></div>
+            </div>
+            <div id="overall-display-area"></div>
+        </div>
+
+        <div id="consonant-tab" class="tab-content">
+            <div class="sub-tabs-bar">
+                <span class="label-caps" data-i18n="label_consonants"></span>
+                <div id="consonant-sub-bar" class="tabs"></div>
+            </div>
+            <div id="consonant-display-area"></div>
+        </div>
+
+        <div id="vowel-tab" class="tab-content">
+            <div class="sub-tabs-bar">
+                <span class="label-caps" data-i18n="label_vowels"></span>
+                <div id="vowel-sub-bar" class="tabs"></div>
+            </div>
+            <div id="vowel-display-area"></div>
+        </div>
+    </form>
+
+    <script src="{{ url_for('static', filename='js/ipa_management.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ipaData = {{ ipa|tojson|safe }};
+            const configData = {{ config|tojson|safe }};
+            
+            initAll(ipaData, configData);
+            initCategories();
+            
+            const lastTab = localStorage.getItem('ipa_mgr_last_main') || 'overall';
+            switchMainTab(lastTab);
+        });
+    </script>
+{% endblock %}

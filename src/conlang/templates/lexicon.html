@@ -1,0 +1,239 @@
+{% extends "layout.html" %}
+
+{% block page_name %}
+    <span data-i18n="nav_word_generator"></span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gen-container { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+    
+    /* 左側控制面板 */
+    .control-panel { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: sticky; top: 20px; box-shadow: var(--shadow-sm); }
+    .config-group { margin-bottom: 20px; }
+    .config-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .input-field { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 1rem; }
+    .num-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn-generate { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+    .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-generate:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* 右側結果面板 */
+    .results-panel { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; min-height: 600px; }
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    
+    .word-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+    
+    /* 單字卡片樣式 */
+    .word-card { 
+        background: #fff; border: 1px solid #eee; padding: 16px; border-radius: 10px; 
+        transition: all 0.2s ease; cursor: pointer; position: relative; overflow: hidden;
+        display: flex; flex-direction: column; gap: 4px;
+    }
+    .word-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    
+    .card-word { font-size: 1.4rem; font-family: "Segoe UI", serif; color: var(--primary); font-weight: 600; }
+    .card-pos { font-size: 0.7rem; color: #999; text-transform: uppercase; font-weight: bold; }
+    .card-trans { font-size: 0.9rem; color: var(--text-main); margin-top: 4px; }
+    
+    .add-hint { 
+        position: absolute; bottom: 0; left: 0; width: 100%; background: var(--primary); 
+        color: white; font-size: 0.7rem; text-align: center; padding: 4px 0;
+        transform: translateY(100%); transition: 0.2s;
+    }
+    .word-card:hover .add-hint { transform: translateY(0); }
+
+    /* Loader */
+    .loader { display: none; border: 2px solid #f3f3f3; border-top: 2px solid white; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gen-container">
+    <aside class="control-panel">
+        <form id="generatorForm">
+            <div class="config-group">
+                <label>Syllable Pattern</label>
+                <textarea id="syllable" name="pattern" class="input-field" 
+                        style="height: 120px; font-size: 0.85rem;" 
+                        placeholder="e.g., CV(C)" value="CVC"></textarea>
+            </div>
+
+            <div class="config-group">
+                <label>Words Count</label>
+                <input type="number" name="count" class="input-field" value="24" min="1" max="200">
+            </div>
+
+            <div class="config-group">
+                <label>Syllables (Min - Max)</label>
+                <div class="num-grid">
+                    <input type="number" name="min_syl" class="input-field" value="1" min="1">
+                    <input type="number" name="max_syl" class="input-field" value="2" min="1">
+                </div>
+            </div>
+
+            <div class="config-group">
+                <label>Translation List (One per line)</label>
+                <textarea id="swadeshList" name="swadesh_list" class="input-field" 
+                        style="height: 120px; font-size: 0.85rem;" 
+                        placeholder="e.g.&#10;sun&#10;moon&#10;water&#10;star"></textarea>
+                <small style="color:#888; font-size: 0.7rem;">If provided, word count will match this list.</small>
+            </div>
+
+            <button type="submit" class="btn-generate" id="genBtn">
+                <span class="loader" id="genLoader"></span>
+                <span id="btnText">✨ Run Generator</span>
+            </button>
+        </form>
+    </aside>
+
+    <main class="results-panel">
+        <div class="results-header">
+            <h3 style="margin:0">Lexicon Sandbox</h3>
+            <div id="genStatus" style="font-size: 0.8rem; color: #888;"></div>
+        </div>
+
+        <div id="resultsGrid" class="word-grid">
+            <div style="grid-column: 1/-1; text-align:center; color:#ccc; margin-top:120px;">
+                <i class="fas fa-wand-magic-sparkles" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+                Configure patterns and generate some words.
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const genForm = document.getElementById('generatorForm');
+    const genBtn = document.getElementById('genBtn');
+    const genLoader = document.getElementById('genLoader');
+    const btnText = document.getElementById('btnText');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const swadeshInput = document.getElementById('swadeshList');
+
+    // 監聽生成表單提交
+    genForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 1. UI 進入 Loading 狀態
+        genBtn.disabled = true;
+        genLoader.style.display = 'inline-block';
+        btnText.innerText = 'Generating...';
+
+        // 2. 收集表單數據
+        const formData = new FormData(genForm);
+        const payload = Object.fromEntries(formData.entries());
+
+        // 3. 處理 Swadesh List (過濾空行與前後空白)
+        const swadeshRaw = swadeshInput.value;
+        const swadeshArray = swadeshRaw.split('\n')
+                                       .map(line => line.trim())
+                                       .filter(line => line.length > 0);
+        
+        // 將清單塞進 payload 傳給 Python
+        payload.swadesh_list = swadeshArray;
+
+        try {
+            // 4. 發送請求到你的 Python API
+            const response = await fetch('/api/generate_words', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // 5. 渲染結果到頁面
+                renderWords(data.words);
+                document.getElementById('genStatus').innerText = `Total items: ${data.words.length}`;
+            } else {
+                alert('Backend Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('Could not connect to the generation API.');
+        } finally {
+            // 6. 恢復按鈕狀態
+            genBtn.disabled = false;
+            genLoader.style.display = 'none';
+            btnText.innerText = '✨ Run Generator';
+        }
+    });
+
+    /**
+     * 將生成的單字物件渲染為 HTML 卡片
+     * @param {Array} words - 格式如 [{word: '...', translation: '...', pos: '...'}, ...]
+     */
+    function renderWords(words) {
+        resultsGrid.innerHTML = '';
+        
+        if (words.length === 0) {
+            resultsGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#888;">No results. Check your config or list.</div>';
+            return;
+        }
+
+        words.forEach((item) => {
+            const card = document.createElement('div');
+            card.className = 'word-card';
+            
+            // 根據你要求的 JSON 格式填充內容
+            card.innerHTML = `
+                <div class="card-pos">${item.pos || 'noun'}</div>
+                <div class="card-word">${item.word}</div>
+                <div class="card-trans">${item.translation || '---'}</div>
+                <div class="add-hint">Click to Save to Dictionary</div>
+            `;
+            
+            // 點擊卡片觸發儲存
+            card.onclick = () => saveToDictionary(item, card);
+            
+            resultsGrid.appendChild(card);
+        });
+    }
+
+    /**
+     * 調用後端現有的字典 API 進行儲存
+     * @param {Object} item - 單字物件
+     * @param {HTMLElement} cardElement - 對應的卡片 DOM 元素（用於顯示成功回饋）
+     */
+    async function saveToDictionary(item, cardElement) {
+        // 防止重複點擊
+        if (cardElement.dataset.saved === "true") return;
+
+        try {
+            const res = await fetch('/dictionary/api/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    word: item.word,
+                    pos: item.pos,
+                    translation: item.translation,
+                    ipa: item.word // 假設生成的 word 就是 IPA 字串
+                })
+            });
+
+            const result = await res.json();
+            
+            if (result.success) {
+                // UI 成功回饋
+                cardElement.dataset.saved = "true";
+                cardElement.style.borderColor = '#28a745';
+                cardElement.style.background = '#f0fff4';
+                
+                const hint = cardElement.querySelector('.add-hint');
+                hint.innerText = '✓ Added to Lexicon';
+                hint.style.background = '#28a745';
+                hint.style.transform = 'translateY(0)';
+            } else {
+                alert('Save failed: ' + (result.message || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error('Save API Error:', e);
+            alert('Failed to save to dictionary.');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,212 @@
+/* 基礎佈局與層級 */
+    .label-caps {
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: var(--text-sub);
+        margin-bottom: 12px;
+        display: block;
+        text-transform: uppercase; 
+    }
+    
+    .dependent-section { 
+        transition: all 0.3s ease; 
+        margin-bottom: 20px; 
+        display: none; 
+        padding-left: 20px; 
+        border-left: 2px solid var(--primary-glass);
+    }
+
+    /* --- 組件化設計：標籤輸入系統 --- */
+    
+    .tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    /* 統一標籤樣式：繼承原本的 pill-label 基因 */
+    .editable-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 15px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        transition: all 0.2s ease;
+        cursor: text;
+    }
+
+    .editable-pill:focus-within {
+        border-color: var(--primary);
+        background: var(--primary-glass);
+        box-shadow: 0 0 0 2px var(--primary-glass);
+    }
+
+    /* 隱形輸入框：與標籤合為一體 */
+    .editable-pill input {
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        text-align: center;
+        padding: 0;
+        min-width: 30px;
+    }
+
+    /* 移除鈕樣式 */
+    .btn-tag-remove {
+        background: none;
+        border: none;
+        color: var(--text-sub);
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1rem;
+        margin-left: 6px;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .btn-tag-remove:hover {
+        color: #dc3545;
+    }
+
+    /* 新增按鈕：虛線樣式 */
+    .btn-tag-add {
+        background: none;
+        border: 1px dashed var(--primary);
+        color: var(--primary);
+        border-radius: 50px;
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-tag-add:hover {
+        background: var(--primary-glass);
+    }
+
+    /* 自定義 Pill 容器：外觀與原本的 pill-label 100% 一致 */
+.custom-pill-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 15px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 32px; /* 確保高度與系統按鈕一致 */
+    box-sizing: border-box;
+}
+
+/* 懸停或選中時，模擬按鈕被點擊的感覺 */
+.custom-pill-tag:hover, .custom-pill-tag:focus-within {
+    border-color: var(--primary);
+    background: var(--primary-glass);
+}
+
+/* 隱形輸入框：這就是關鍵！它沒有邊框、沒有底色，看起來就像按鈕文字 */
+.custom-pill-tag input {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text-main);
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    width: auto;
+}
+
+/* 刪除小 X */
+.btn-tag-remove {
+    background: none;
+    border: none;
+    color: var(--text-sub);
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-left: 6px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.btn-tag-remove:hover {
+    color: #dc3545;
+}
+
+/* Tab 基礎樣式 */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 2px;
+}
+
+.tab-btn {
+    padding: 10px 24px;
+    border: none;
+    background: none;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: var(--primary);
+    background: var(--primary-glass);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+}
+
+/* 排序區域樣式強化 */
+.sort-section-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.sort-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.sort-section-title span {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.drag-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 讓排序中的項目有浮起感 */
+.sortable-chosen {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transform: scale(1.02);
+    z-index: 10;
+}

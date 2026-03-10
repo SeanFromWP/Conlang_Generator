@@ -1,0 +1,12 @@
+pyproject.toml
+src/conlang/__init__.py
+src/conlang/app.py
+src/conlang/decode.py
+src/conlang.egg-info/PKG-INFO
+src/conlang.egg-info/SOURCES.txt
+src/conlang.egg-info/dependency_links.txt
+src/conlang.egg-info/requires.txt
+src/conlang.egg-info/top_level.txt
+src/conlang/lexicon/generator.py
+src/conlang/util/__init__.py
+src/conlang/util/paths.py

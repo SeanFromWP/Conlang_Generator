@@ -1,0 +1,128 @@
+/* ==========================================================================
+   1. 基礎佈局與分頁系統 (Tabs)
+   ========================================================================== */
+.tabs { 
+    display: flex; gap: 8px; margin-bottom: 24px; 
+    border-bottom: 2px solid var(--border); justify-content: flex-start; 
+}
+
+.tab-btn { 
+    padding: 12px 24px; border: none; cursor: pointer; font-weight: 600; 
+    background: transparent; color: var(--text-sub); border-bottom: 3px solid transparent; 
+    margin-bottom: -2px; font-family: inherit; font-size: 0.95rem; transition: 0.2s; white-space: nowrap; 
+}
+
+.tab-btn.active { 
+    color: var(--primary); border-bottom-color: var(--primary); 
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.label-caps {
+    font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-sub);
+    margin-bottom: 12px; display: block; text-transform: uppercase; 
+}
+
+/* ==========================================================================
+   2. 維度選擇區 (與全站 Pill 按鈕一致)
+   ========================================================================== */
+.sort-config-zone { 
+    background: #fafafa; border: 1px solid #eee; border-radius: 10px; 
+    padding: 15px; margin-bottom: 24px; 
+}
+
+.sort-pool { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 核心 Pill 樣式 */
+.custom-pill-tag {
+    display: inline-flex; align-items: center; padding: 5px 15px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 50px; cursor: pointer; transition: all 0.2s ease;
+    height: 32px; box-sizing: border-box; user-select: none;
+    font-size: 0.9rem; color: var(--text-main);
+}
+
+.custom-pill-tag:hover {
+    border-color: var(--primary); background: var(--primary-glass);
+}
+
+/* 激活狀態：修正為 Glass 效果而非實心色 */
+.custom-pill-tag.active {
+    background: var(--primary-glass) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+/* 確保激活時內部 Span 顏色同步 */
+.custom-pill-tag.active span {
+    color: var(--primary) !important;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   3. 形態矩陣表格 (Word Style)
+   ========================================================================== */
+.matrix-wrapper { 
+    margin-top: 20px; background: white; border: 1px solid var(--border); 
+    border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.morph-matrix-table { 
+    width: 100%; border-collapse: collapse; background: white; table-layout: fixed; 
+}
+
+/* 表頭與標籤列 */
+.morph-matrix-table th { 
+    background: #fafafa; border-bottom: 2px solid var(--border);
+    border-right: 1px solid var(--border); padding: 12px; 
+    font-weight: 700; font-size: 0.85rem; color: var(--text-sub); 
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.matrix-label-col { 
+    background: #fdfdfd; border-right: 2px solid var(--border);
+    font-weight: 600; text-align: center; width: 110px; 
+    color: var(--primary); padding: 8px !important;
+}
+
+.morph-matrix-table td { 
+    border: 1px solid var(--border); padding: 0; transition: 0.2s;
+}
+
+/* 矩陣內的文字輸入框 */
+.word-cell-textarea {
+    width: 100%; height: 75px; border: none; padding: 10px;
+    font-family: 'Consolas', 'Monaco', monospace; font-size: 0.95rem;
+    text-align: left; outline: none; background: transparent;
+    resize: none; display: block; line-height: 1.5;
+    color: var(--text-main); transition: 0.2s;
+}
+
+/* 焦點反饋 */
+.morph-matrix-table td:has(.word-cell-textarea:focus) {
+    background: var(--primary-glass);
+}
+
+.word-cell-textarea:focus {
+    color: var(--primary);
+}
+
+/* ==========================================================================
+   4. 裝飾性組件 (Group Headers)
+   ========================================================================== */
+.matrix-group-title {
+    font-size: 0.85rem; font-weight: bold; color: var(--primary);
+    text-transform: uppercase; margin: 30px 0 10px 5px; letter-spacing: 1px;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.matrix-group-title::before {
+    content: ""; display: inline-block; width: 4px; height: 14px; 
+    background: var(--primary); border-radius: 2px;
+}
+
+.group-header { 
+    font-size: 0.8rem; font-weight: bold; color: var(--text-sub); 
+    text-transform: uppercase; margin: 25px 0 10px 5px; letter-spacing: 1px; 
+}

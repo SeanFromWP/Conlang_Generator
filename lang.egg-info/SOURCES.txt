@@ -1,0 +1,11 @@
+pyproject.toml
+lang.egg-info/PKG-INFO
+lang.egg-info/SOURCES.txt
+lang.egg-info/dependency_links.txt
+lang.egg-info/requires.txt
+lang.egg-info/top_level.txt
+src/root/__init__.py
+src/root/app.py
+src/root/decode.py
+src/root/paths.py
+src/root/lexicon/generator.py

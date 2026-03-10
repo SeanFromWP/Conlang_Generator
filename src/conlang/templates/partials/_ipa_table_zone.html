@@ -1,0 +1,47 @@
+{# 此檔案供 JS 動態載入或初次渲染使用 #}
+{% macro render_ipa_table(type, key, symbol, ipa, saved) %}
+<table class="ipa-table">
+    <thead>
+        <tr>
+            <th></th>
+            {% set cols = ipa.vowel_frontness if type == 'vowel' else ipa.places %}
+            {% for c in cols %}
+                <th data-i18n="{{ c }}">{{ c }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% set rows = ipa.vowel_heights_list if type == 'vowel' else ipa.consonant_methods %}
+        {% set data = ipa.base_vowels_table if type == 'vowel' else ipa.base_consonants %}
+        
+        {% for r in rows %}
+            {% set row_key = r.toLowerCase() %}
+            {% set is_allowed = (key != 'aspiration' or row_key in ['ipa_manner_plosive', 'ipa_manner_affricate']) %}
+            
+            <tr>
+                <th data-i18n="{{ r }}">{{ r }}</th>
+                {% for col_idx in range(cols|length) %}
+                    <td>
+                        <div style="display:flex; justify-content:center; gap:4px;">
+                        {% if is_allowed and data[r] and data[r][col_idx] %}
+                            {% for s in data[r][col_idx] %}
+                                {% if s %}
+                                    {% set full = s + symbol %}
+                                    {% set is_checked = full in saved[type] %}
+                                    
+                                    <label class="glass-pill table-ipa-item">
+                                        <input type="checkbox" name="{{ type }}" value="{{ full }}" 
+                                               {% if is_checked %}checked{% endif %}>
+                                        <span class="ipa-symbol-text">{{ full }}</span>
+                                    </label>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        </div>
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}

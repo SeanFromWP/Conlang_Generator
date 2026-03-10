@@ -1,0 +1,25 @@
+<tr id="addRow" style="display: none; background: var(--primary-glass);">
+    <td><input type="text" id="new-word" class="inplace-input font-bold" data-i18n-placeholder="dict_placeholder_word" placeholder=""></td>
+    <td>
+        <select id="new-pos" class="inplace-input">
+            <option value="noun" label=" ">
+                <span data-i18n="pos_noun"></span>
+            </option>
+            <option value="verb" label=" ">
+                <span data-i18n="pos_verb"></span>
+            </option>
+            <option value="adj" label=" ">
+                <span data-i18n="pos_adj"></span>
+            </option>
+            <option value="adv" label=" ">
+                <span data-i18n="pos_adv"></span>
+            </option>
+        </select>
+    </td>
+    <td><input type="text" id="new-translation" class="inplace-input" data-i18n-placeholder="dict_placeholder_meaning" placeholder=""></td>
+    <td><input type="text" id="new-ipa" class="inplace-input phonetic" data-i18n-placeholder="dict_placeholder_ipa" placeholder=""></td>
+    <td style="display: flex; gap: 4px;">
+        <button onclick="saveNewWord()" class="btn-icon btn-save-sm" title="Confirm">✅</button>
+        <button onclick="hideAddRow()" class="btn-icon btn-cancel-sm" title="Cancel">❌</button>
+    </td>
+</tr>

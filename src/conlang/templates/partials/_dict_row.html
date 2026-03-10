@@ -1,0 +1,49 @@
+<tr class="dict-row" id="row-{{ index }}">
+    <td class="view-mode-{{ index }}">
+        <strong class="word-main">{{ entry.word }}</strong>
+    </td>
+    <td class="view-mode-{{ index }}">
+        <span class="pos-tag" data-i18n="pos_{{ entry.pos }}"></span>
+    </td>
+    <td class="view-mode-{{ index }}">
+        <span class="word-sub">{{ entry.translation }}</span>
+    </td>
+    <td class="view-mode-{{ index }}">
+        <span class="phonetic">/{{ entry.ipa }}/</span>
+    </td>
+    <td class="view-mode-{{ index }}" style="display: flex; gap: 8px;">
+        <button onclick="toggleEdit({{ index }})" class="btn-icon">✏️</button>
+    </td>
+
+    <td class="edit-mode-{{ index }}" style="display: none;">
+        <input type="text" class="inplace-input font-bold" name="word" value="{{ entry.word }}">
+    </td>
+    <td class="edit-mode-{{ index }}" style="display: none;">
+        <select class="inplace-input" name="pos">
+            {# 使用 label=" " 阻止瀏覽器自動顯示 value #}
+            <option value="noun" label=" " {% if entry.pos == 'noun' %}selected{% endif %}>
+                <span data-i18n="pos_noun"></span>
+            </option>
+            <option value="verb" label=" " {% if entry.pos == 'verb' %}selected{% endif %}>
+                <span data-i18n="pos_verb"></span>
+            </option>
+            <option value="adj" label=" " {% if entry.pos == 'adj' %}selected{% endif %}>
+                <span data-i18n="pos_adj"></span>
+            </option>
+            <option value="adv" label=" " {% if entry.pos == 'adv' %}selected{% endif %}>
+                <span data-i18n="pos_adv"></span>
+            </option>
+        </select>
+    </td>
+    <td class="edit-mode-{{ index }}" style="display: none;">
+        <input type="text" class="inplace-input" name="translation" value="{{ entry.translation }}">
+    </td>
+    <td class="edit-mode-{{ index }}" style="display: none;">
+        <input type="text" class="inplace-input phonetic" name="ipa" value="{{ entry.ipa }}">
+    </td>
+    <td class="edit-mode-{{ index }}" style="display: none; gap: 4px;">
+        <button onclick="saveRow({{ index }})" class="btn-icon btn-save-sm" title="Save">✅</button>
+        <button onclick="toggleEdit({{ index }})" class="btn-icon btn-cancel-sm" title="Cancel">❌</button>
+        <button onclick="deleteRow({{ index }})" class="btn-icon btn-delete-sm" title="Delete">🗑️</button>
+    </td>
+</tr>

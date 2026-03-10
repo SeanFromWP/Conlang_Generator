@@ -1,0 +1,75 @@
+# ==========================================
+# IPA Phonology Configuration (Final Translation-Ready Version)
+# ==========================================
+
+# 1. 輔音部位 (Columns) - 對應 CSV: ipa_place_...
+places: 
+  - "ipa_place_bilabial"
+  - "ipa_place_labiodental"
+  - "ipa_place_dental"
+  - "ipa_place_alveolar"
+  - "ipa_place_postalveolar"
+  - "ipa_place_alveolo_palatal"
+  - "ipa_place_retroflex"
+  - "ipa_place_palatal"
+  - "ipa_place_velar"
+  - "ipa_place_uvular"
+  - "ipa_place_glottal"
+
+# 2. 輔音方法 (Rows) - 對應 CSV: ipa_manner_...
+consonant_methods: 
+  - "ipa_manner_plosive"
+  - "ipa_manner_affricate"
+  - "ipa_manner_nasal"
+  - "ipa_manner_trill"
+  - "ipa_manner_tap"
+  - "ipa_manner_fricative"
+  - "ipa_manner_lat_fricative"
+  - "ipa_manner_approximant"
+  - "ipa_manner_lat_approximant"
+
+# 3. 母音維度 (Rows/Cols) - 對應 CSV: ipa_height_... / ipa_backness_...
+vowel_heights_list: 
+  - "ipa_height_close"
+  - "ipa_height_near_close"
+  - "ipa_height_close_mid"
+  - "ipa_height_mid"
+  - "ipa_height_open_mid"
+  - "ipa_height_near_open"
+  - "ipa_height_open"
+
+vowel_frontness: 
+  - "ipa_backness_front"
+  - "ipa_backness_central"
+  - "ipa_backness_back"
+
+# 4. 變音符號與分頁標籤 - 對應 CSV: ipa_... / ipa_...
+diacritics:
+  ipa_aspiration: { symbol: "ʰ", label: "ipa_aspiration", applies_to: "consonants" }
+  ipa_palatalization: { symbol: "ʲ", label: "ipa_palatalization", applies_to: "consonants" }
+  ipa_labialization: { symbol: "ʷ", label: "ipa_labialization", applies_to: "consonants" }
+  ipa_nasalization: { symbol: "̃", label: "ipa_nasalization", applies_to: "vowels" }
+  ipa_creaky: { symbol: "̰", label: "ipa_creaky", applies_to: "vowels" }
+  ipa_long: { symbol: "ː", label: "ipa_long", applies_to: "vowels" }
+
+# 5. 基礎輔音矩陣
+base_consonants:
+  "ipa_manner_plosive": [["p","b"], null, null, ["t","d"], null, null, ["ʈ","ɖ"], ["c","ɟ"], ["k","g"], ["q","ɢ"], ["ʔ",""]]
+  "ipa_manner_affricate": [["pɸ","bβ"], ["pf","bv"], ["tθ","dð"], ["ts","dz"], ["tʃ","dʒ"], ["tɕ","dʑ"], ["ʈʂ","ɖʐ"], ["cç","ɟʝ"], ["kx","ɡɣ"], ["qχ","ɢʁ"], null]
+  "ipa_manner_nasal": [["","m"], ["","ɱ"], null, ["","n"], null, null, ["","ɳ"], ["","ɲ"], ["","ŋ"], ["","ɴ"], null]
+  "ipa_manner_trill": [["","ʙ"], null, null, ["","r"], null, null, null, null, null, ["","ʀ"], null]
+  "ipa_manner_tap": [null, ["","ⱱ"], null, ["","ɾ"], null, null, ["","ɽ"], null, null, null, null]
+  "fricative": [["ɸ","β"], ["f","v"], ["θ","ð"], ["s","z"], ["ʃ","ʒ"], ["ɕ","ʑ"], ["ʂ","ʐ"], ["ç","ʝ"], ["x","ɣ"], ["χ","ʁ"], ["h","ɦ"]]
+  "ipa_manner_lat_fricative": [null, null, null, ["ɬ","ɮ"], null, null, null, null, null, null, null]
+  "ipa_manner_approximant": [["","w"], ["","ʋ"], null, ["","ɹ"], null, null, ["","ɻ"], ["","j"], ["","ɰ"], null, null]
+  "ipa_manner_lat_approximant": [null, null, null, ["","l"], null, null, ["","ɭ"], ["","ʎ"], ["","ʟ"], null, null]
+
+# 6. 基礎母音矩陣
+base_vowels_table:
+  "ipa_height_close": [["i","y"], ["ɨ","ʉ"], ["ɯ","u"]]
+  "ipa_height_near_close": [["ɪ","ʏ"], [null,null], [null,"ʊ"]]
+  "ipa_height_close_mid": [["e","ø"], ["ɘ","ɵ"], ["ɤ","o"]]
+  "ipa_height_mid": [null, ["","ə"], null]
+  "ipa_height_open_mid": [["ɛ","œ"], ["ɜ","ɞ"], ["ʌ","ɔ"]]
+  "ipa_height_near_open": [["æ",""], ["ɐ",""], [null,null]]
+  "ipa_height_open": [["a","ɶ"], ["ä",""], ["ɑ","ɒ"]]

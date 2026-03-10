@@ -1,0 +1,49 @@
+"sec_morphology_type":
+  "opt_morphology":
+    type: single
+    options: ["type_analytic", "type_synthetic"]
+  "opt_synthetic_type":
+    type: single
+    options: ["type_agglutinative", "type_fusional", "type_polysynthetic"]
+  "opt_word_order":
+    type: single
+    options: ["SVO", "VSO", "VOS", "SOV", "OSV", "OVS", "V1", "V2"]
+
+"sec_universal_features":
+  bools: ["feat_gender", "feat_number", "feat_clusivity", "feat_politeness", "feat_alignment"]
+  settings:
+    "feat_gender": { type: multi, options: ["gen_neutral", "gen_masculine", "gen_feminine"] }
+    "feat_number": { type: multi, options: ["num_singular", "num_dual", "num_trial", "num_plural"] }
+    "feat_person": { type: multi, options: ["per_1st", "per_1st_inc", "per_2nd", "per_2nd_pol", "per_3rd"] }
+    "feat_alignment": { type: single, options: ["align_nominative", "align_ergative", "align_transitive", "align_active", "align_tripartite", "align_direct", "align_austronesian"] }
+
+"sec_noun_syntax":
+  bools: ["feat_case", "feat_number", "feat_alienability"]
+  settings:
+    "feat_case":
+      type: multi
+      groups:
+        "grp_spatiotemporal": ["case_inessive", "case_elative", "case_illative", "case_adessive", "case_ablative", "case_allative", "case_locative", "case_terminative", "case_perlative", "case_temporal"]
+        "grp_possessive_instr": ["case_genitive", "case_dative", "case_instrumental", "case_comitative", "case_abessive", "case_possessive", "case_privative"]
+        "grp_state_manner": ["case_essive", "case_translative", "case_equative", "case_adverbial", "case_comparative", "case_instructive"]
+        "grp_causal_final": ["case_causal", "case_final", "case_benefactive", "case_aversive"]
+        "grp_other_cases": ["case_vocative", "case_partitive", "case_prepositional"]
+    "feat_number": { type: multi, options: ["num_singular", "num_dual", "num_trial", "num_plural"] }
+
+"sec_verb_syntax":
+  bools: ["feat_conjugation", "feat_tense", "feat_mood", "feat_aspect", "feat_voice", "feat_gender"]
+  settings:
+    "feat_tense": { type: multi, options: ["tense_present", "tense_past", "tense_future"] }
+    "feat_mood": { type: multi, options: ["mood_indicative", "mood_imperative", "mood_subjunctive", "mood_conditional"] }
+    "feat_aspect": { type: multi, options: ["aspect_perfective", "aspect_imperfective", "aspect_progressive", "aspect_habitual", "aspect_perfect"] }
+    "feat_voice": { type: multi, options: ["voice_active", "voice_passive", "voice_middle"] }
+    "feat_conjugation": { type: single, options: ["marker_type", "independent_type"] }
+    "feat_gender": { type: single, options: ["scope_all", "scope_partial"] }
+
+"sec_adj_syntax":
+  bools: ["feat_agreement"]
+
+"sec_phonology_struct":
+  "opt_syllable_struct":
+    type: single 
+    options: ["syllable_simple", "syllable_moderate", "syllable_complex"]

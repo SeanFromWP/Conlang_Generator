@@ -1,0 +1,129 @@
+<div class="section-header">
+    <h2 data-i18n="{{section}}"></h2>
+</div>
+
+<div class="card">
+    {# 1. 功能特性 (開關) #}
+    {% if content.bools %}
+        <div class="label-caps" data-i18n="label_features"></div>
+        <div class="grid-flex" style="margin-bottom:25px;">
+            {% for feat_key in content.bools %}
+                {% set is_person = (section == 'sec_universal_features' and feat_key == 'feat_person') %}
+                <label class="pill-label {% if is_person %}readonly-pill{% endif %}">
+                    <input type="checkbox" class="bool-trigger" 
+                           data-section="{{section}}" data-feature="{{feat_key}}"
+                           name="bools|{{section}}|{{feat_key}}" 
+                           {% if is_person or (config[section] and config[section]['bools'] and config[section]['bools'][feat_key]) %}checked{% endif %}>
+                    <div class="bilingual-stack"><span data-i18n="{{feat_key}}"></span></div>
+                </label>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# 2. 主要分類選項 (Word Order, Alignment 等) #}
+    {% for cat, data in content.items() if cat not in ['bools', 'settings'] and data.options %}
+        <div style="margin-top:20px;">
+            <div class="label-caps" data-i18n="{{cat}}"></div>
+            <div class="grid-flex">
+                {% for opt in data.options %}
+                    {# --- 支援 YAML Impact 物件格式 --- #}
+                    {% set is_dict = opt is mapping %}
+                    {% set opt_val = opt.value if is_dict else opt %}
+                    {% set opt_impact = opt.impact | join(',') if is_dict else "" %}
+                    
+                    <label class="pill-label">
+                        <input type="{{ 'radio' if data.type == 'single' else 'checkbox' }}" 
+                               name="{{section}}|{{cat}}" 
+                               value="{{opt_val}}"
+                               {% if opt_impact %} data-impact="{{ opt_impact }}" {% endif %}
+                               {% if config[section] and config[section][cat] and opt_val in config[section][cat] %}checked{% endif %}>
+                        <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+    {# 3. 細項設定 (Case, Gender 等) #}
+    {% if content.settings %}
+        {% for subfeat_key, info in content.settings.items() %}
+            <div class="dependent-section" id="dep-{{ section }}-{{ subfeat_key }}">
+                <div class="label-caps" style="color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px;" data-i18n="{{subfeat_key}}"></div>
+
+                {# --- 處理 Case Category (Groups) --- #}
+                {% if info.groups %}
+                    {% for group_key, group_options in info.groups.items() %}
+                        <div class="group-header" style="margin-top: 10px;">
+                            <span data-i18n="{{group_key}}" style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);"></span>
+                        </div>
+                        <div class="grid-flex" style="margin-bottom: 15px;">
+                            {% for opt in group_options %}
+                            <label class="pill-label">
+                                <input type="checkbox" name="settings|{{ section }}|{{ subfeat_key }}" value="{{ opt }}"
+                                       {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and opt in config[section]['settings'][subfeat_key] %}checked{% endif %}>
+                                <div class="bilingual-stack"><span data-i18n="{{opt}}"></span></div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {# 渲染一般 Options #}
+                    <div class="grid-flex" style="margin-bottom: 15px;">
+                        {% for opt in info.options %}
+                            {# --- 支援 YAML Impact 物件格式 --- #}
+                            {% set is_dict = opt is mapping %}
+                            {% set opt_val = opt.value if is_dict else opt %}
+                            {% set opt_impact = opt.impact | join(',') if is_dict else "" %}
+
+                            <label class="pill-label">
+                                <input type="{{ 'radio' if info.type == 'single' else 'checkbox' }}" 
+                                       name="settings|{{ section }}|{{ subfeat_key }}" 
+                                       value="{{ opt_val }}"
+                                       {% if opt_impact %} data-impact="{{ opt_impact }}" {% endif %}
+                                       {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and opt_val in config[section]['settings'][subfeat_key] %}checked{% endif %}>
+                                <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# --- 自定義按鈕區 (Custom Pills) --- #}
+                <div class="custom-addition-zone" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;">
+                    <div id="options-container-{{ section }}-{{ subfeat_key }}" class="grid-flex" style="gap: 8px;">
+                        
+                        {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] %}
+                            {% set defaults = [] %}
+                            {% if info.options %}
+                                {% for o in info.options %}
+                                    {% set val = o.value if o is mapping else o %}
+                                    {% set _ = defaults.append(val) %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if info.groups %}
+                                {% for gk, go in info.groups.items() %}
+                                    {% for o in go %}{% set _ = defaults.append(o) %}{% endfor %}
+                                {% endfor %}
+                            {% endif %}
+
+                            {% for saved_val in config[section]['settings'][subfeat_key] %}
+                                {% if saved_val not in defaults %}
+                                <div class="custom-pill-tag">
+                                    <input type="text" name="settings|{{ section }}|{{ subfeat_key }}" 
+                                           value="{{ saved_val }}" autocomplete="off">
+                                    <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove()">×</button>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+
+                        <button type="button" class="pill-label btn-pill-add" 
+                                style="border: 1px dashed var(--primary); background: none; cursor: pointer; color: var(--primary); height: 32px;"
+                                onclick="TagManager.add('{{ section }}', '{{ subfeat_key }}')">
+                            + <span data-i18n="btn_add_custom"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>

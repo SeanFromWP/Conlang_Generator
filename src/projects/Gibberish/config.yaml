@@ -1,0 +1,162 @@
+phonology:
+  inventory_consonants:
+  - b
+  - bv
+  - d
+  - g
+  - j
+  - k
+  - l
+  - m
+  - n
+  - p
+  - q
+  - r
+  - t
+  - ŋ
+  - ʔ
+  - ⱱ
+  inventory_vowels:
+  - a
+  - e
+  - i
+  - ĩ
+  - o
+  - ə
+  - ɛ
+  - ɪ
+  inventory:
+  - b
+  - bv
+  - d
+  - g
+  - j
+  - k
+  - l
+  - m
+  - n
+  - p
+  - q
+  - r
+  - t
+  - ŋ
+  - ʔ
+  - ⱱ
+  - a
+  - e
+  - i
+  - ĩ
+  - o
+  - ə
+  - ɛ
+  - ɪ
+  weights:
+    consonants:
+      b: 36
+      g: 86
+      j: 10
+      k: 10
+      q: 35
+      m: 67
+      l: 41
+      d: 10
+      n: 67
+      p: 22
+      r: 31
+      t: 10
+      ŋ: 28
+      ʔ: 39
+    vowels:
+      a: 10
+      e: 10
+      i: 10
+      ĩ: 10
+      o: 10
+      ə: 10
+      ɛ: 10
+      ɪ: 10
+  custom_order: b g j k q m l d n p r t ŋ ʔ a e i ĩ o ə ɛ ɪ
+  categories:
+    A:
+    - b
+    - k
+    - p
+    - q
+    - r
+    - m
+    - g
+    - ʔ
+    - ĩ
+    - t
+    - e
+    - ə
+    B:
+    - b
+    X:
+    - d
+sec_morphology_type:
+  opt_morphology:
+  - type_analytic
+  opt_synthetic_type:
+  - type_fusional
+  opt_word_order:
+  - OSV
+  markers: {}
+  selected_matrix_dims: []
+sec_universal_features:
+  bools:
+    feat_gender: true
+    feat_alignment: true
+  settings:
+    feat_gender:
+    - gen_neutral
+    - gen_masculine
+    - gen_feminine
+    feat_number:
+    - num_singular
+    - num_dual
+    - num_trial
+    feat_alignment:
+    - align_nominative
+sec_noun_syntax:
+  bools:
+    feat_case: true
+  settings:
+    feat_case:
+    - case_nominative
+    - case_accusative
+    - case_illative
+    - case_ablative
+    - case_genitive
+    - case_dative
+    - case_instrumental
+    - case_translative
+    - case_final
+    - case_vocative
+    feat_number:
+    - num_singular
+    - num_dual
+  markers: {}
+  selected_matrix_dims:
+  - univ|feat_gender
+  - local|feat_case
+sec_verb_syntax:
+  bools:
+    feat_tense: true
+    feat_mood: true
+    feat_aspect: true
+  settings:
+    feat_tense:
+    - tense_present
+    - tense_past
+    - '123'
+    feat_mood:
+    - mood_indicative
+    - mood_imperative
+    feat_aspect:
+    - aspect_perfective
+    - aspect_imperfective
+    feat_conjugation:
+    - marker_type
+  markers: {}
+  selected_matrix_dims: []

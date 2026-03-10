@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+
+{% block page_name %}
+    <span data-i18n="nav_ipa_system"></span>
+{% endblock %}
+
+{% block actions %}
+    <button type="button" class="btn btn-outline" onclick="clearIPA()">
+        <span data-i18n="btn_clear_config"></span>
+    </button>
+    <button type="submit" form="main-form" class="btn btn-save">
+        <span data-i18n="btn_save_config"></span>
+    </button>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<form id="main-form" method="POST">
+    <div class="tabs">
+        <button type="button" class="tab-btn active" onclick="switchMainTab('consonant')">
+            <span data-i18n="ipa_consonants"></span>
+        </button>
+        <button type="button" class="tab-btn" onclick="switchMainTab('vowel')">
+            <span data-i18n="ipa_vowels"></span>
+        </button>
+    </div>
+
+    {% for type in ['consonant', 'vowel'] %}
+        {% include "partials/_ipa_tab_section.html" %}
+    {% endfor %}    
+</form>
+
+<script>
+    // 從 Flask 傳入的資料（已經過動態路徑處理）
+    const ipa = {{ ipa|tojson|safe }};
+    const config = {{ config|tojson|safe }};
+    
+    // 確保 phonology 結構存在，避免報錯
+    const saved = {
+        consonant: config.phonology?.inventory_consonants || [],
+        vowel: config.phonology?.inventory_vowels || []
+    };
+    
+    const SORT_ORDER = ['ipa_base', 'ipa_aspirated', 'ipa_long', 'ipa_nasalized', 'ipa_labialized',
+    'ipa_palatalized', 'ipa_velarized', 'ipa_ejective'];
+
+    function switchMainTab(type) {
+        document.querySelectorAll(".tab-content, .tab-btn").forEach(el => el.classList.remove("active"));
+        const target = document.getElementById(`${type}-tab`);
+        if(target) target.classList.add("active");
+        event.currentTarget.classList.add("active");
+        localStorage.setItem('ipa_last_main_tab', type);
+    }
+
+    // 1. 初始化所有可能的表格 Zone
+    function initAllZones() {
+        ['consonant', 'vowel'].forEach(type => {
+            const area = document.getElementById(`${type}-display-area`);
+            if (!area) return;
+
+            // 取得對應分類的變音符號 Key
+            const diacriticKeys = Object.keys(ipa.diacritics).filter(k => ipa.diacritics[k].applies_to === type + 's');
+            const allKeys = ['base', ...diacriticKeys];
+            
+            allKeys.forEach(key => {
+                const symbol = (key === 'base') ? '' : (ipa.diacritics[key]?.symbol || '');
+                const zone = document.createElement('div');
+                zone.id = `zone-${type}-${key}`;
+                zone.className = 'ipa-zone';
+                zone.innerHTML = generateTableHTML(type, key, symbol);
+                area.appendChild(zone);
+            });
+        });
+    }
+
+    const DIACRITIC_RULES = {
+        'aspiration': ['ipa_manner_plosive', 'ipa_manner_affricate'],
+    };
+
+    function generateTableHTML(type, key, symbol) {
+        const isV = (type === 'vowel');
+        const rows = isV ? ipa.vowel_heights_list : ipa.consonant_methods;
+        const cols = isV ? ipa.vowel_frontness : ipa.places;
+        const data = isV ? ipa.base_vowels_table : ipa.base_consonants;
+
+        let html = `<table class="ipa-table"><thead><tr><th></th>`;
+        cols.forEach(c => html += `<th data-i18n="${c}">${c}</th>`);
+        html += `</tr></thead><tbody>`;
+
+        rows.forEach(r => {
+            const rowKey = r.toLowerCase();
+            const rules = DIACRITIC_RULES[key];
+            const isAllowed = !rules || rules.includes(rowKey);
+
+            html += `<tr><th data-i18n="${r}">${r}</th>`;
+            const rowData = data[r] || [];
+
+            cols.forEach((_, colIdx) => {
+                const pair = rowData[colIdx];
+                html += `<td><div style="display:inline-flex; justify-content:center; gap:4px; align-items:center;">`;
+                
+                if (isAllowed && pair && Array.isArray(pair)) {
+                    pair.forEach(s => {
+                        if (s && typeof s === 'string') {
+                            const full = s + symbol;
+                            const isChecked = saved[type].includes(full);
+                            html += `
+                                <label class="glass-pill table-ipa-item">
+                                    <input type="checkbox" name="ipa_${type}" value="${full}" ${isChecked ? 'checked' : ''}>
+                                    <span class="ipa-symbol-text">${full}</span>
+                                </label>`;
+                        }
+                    });
+                }
+                html += `</div></td>`;
+            });
+            html += `</tr>`;
+        });
+        return html + `</tbody></table>`;
+    }
+
+    function updateSubTabs(type, targetKey = null) {
+        const subBar = document.getElementById(`${type}-sub-bar`);
+        if (!subBar) return;
+
+        const activeKeys = ['base', ...Array.from(document.querySelectorAll(`.dia-trigger[data-type="${type}"]:checked`)).map(cb => cb.dataset.key)];
+
+        activeKeys.sort((a, b) => {
+            const idxA = SORT_ORDER.indexOf(a);
+            const idxB = SORT_ORDER.indexOf(b);
+            return ((idxA === -1) ? 999 : idxA) - ((idxB === -1) ? 999 : idxB);
+        });
+
+        subBar.innerHTML = '';
+        activeKeys.forEach(key => {
+            const btn = document.createElement('button');
+            btn.className = 'sub-tab-btn';
+            btn.type = 'button';
+            btn.dataset.key = key;
+            btn.innerHTML = `<span data-i18n="${(key === 'base') ? 'ipa_plain' : `${key}`}"></span>`;
+            
+            btn.onclick = () => {
+                subBar.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll(`#${type}-display-area .ipa-zone`).forEach(z => z.classList.remove('active'));
+                const targetZone = document.getElementById(`zone-${type}-${key}`);
+                if (targetZone) targetZone.classList.add('active');
+                localStorage.setItem(`ipa_last_sub_${type}`, key);
+            };
+            subBar.appendChild(btn);
+        });
+
+        const lastKey = targetKey || localStorage.getItem(`ipa_last_sub_${type}`);
+        const targetBtn = subBar.querySelector(`[data-key="${lastKey}"]`) || subBar.firstChild;
+        if (targetBtn) targetBtn.click();
+
+        if (window.applyTranslations) applyTranslations();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initAllZones();
+
+        ['consonant', 'vowel'].forEach(type => {
+            document.querySelectorAll(`.dia-trigger[data-type="${type}"]`).forEach(cb => {
+                const sym = cb.dataset.symbol;
+                // 檢查是否有存檔過的變音符號，有的話自動勾選 Trigger
+                if (saved[type].some(v => v.includes(sym) && v !== sym)) cb.checked = true;
+                cb.onchange = () => updateSubTabs(type);
+            });
+            updateSubTabs(type);
+        });
+
+        const lastMain = localStorage.getItem('ipa_last_main_tab');
+        if (lastMain) {
+            const btn = document.querySelector(`.tab-btn[onclick*="${lastMain}"]`);
+            if (btn) btn.click();
+        }
+    });
+
+    window.clearIPA = () => {
+        if (!confirm("確定要重置所有發音設定嗎？此操作將套用於目前的專案。")) return;
+        localStorage.clear();
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.innerHTML = '<input type="hidden" name="action_type" value="reset_ipa">';
+        document.body.appendChild(f);
+        f.submit();
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "layout.html" %}
+
+{% block page_name %}
+    <span data-i18n="nav_dictionary"></span>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* 保留你原有的 CSS */
+        .page-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; }
+        .search-group { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
+        .search-box { position: relative; display: flex; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px; transition: 0.2s; flex-grow: 1; max-width: 400px; }
+        .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glass); }
+        .search-box input { border: none; background: transparent; padding: 0 8px; font-size: 0.95rem; color: var(--text-main); outline: none; width: 100%; }
+        .word-count-pill { display: flex; align-items: center; gap: 6px; padding: 0 14px; height: 40px; background: var(--primary-glass); color: var(--primary); border-radius: 8px; font-weight: 600; font-size: 0.9rem; white-space: nowrap; }
+        .btn-add-primary { background: var(--primary); color: white; padding: 0 20px; height: 40px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 2px 6px rgba(26,115,232,0.2); }
+        .btn-add-primary:hover { background: #1557b0; transform: translateY(-1px); }
+        .dict-table { width: 100%; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); table-layout: fixed; }
+        .dict-table table { width: 100%; border-collapse: collapse; }
+        .dict-table th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.8rem; color: var(--text-sub); border-bottom: 1px solid var(--border); position: relative; }
+        .dict-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; transition: 0.2s; }
+        
+        /* 新增：排序標頭樣式 */
+        .sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
+        .sortable:hover { background: #f0f2f5; }
+        .sort-indicator { margin-left: 4px; font-size: 0.7rem; color: var(--primary); opacity: 0.6; }
+        
+        .inplace-input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; background: white; color: var(--text-main); }
+        .inplace-input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: rgba(0,0,0,0.05); }
+        .btn-save-sm { color: #28a745; }
+        .btn-cancel-sm { color: #dc3545; }
+        .btn-delete-sm { color: #bbb; margin-left: auto; }
+        .btn-delete-sm:hover { color: #dc3545; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="page-controls">
+    <div class="search-group">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="dictSearch" data-i18n-placeholder="dict_search" placeholder="" onkeyup="filterDictionary()">
+        </div>
+        <div class="word-count-pill">
+            <span id="wordCount">{{ dictionary|length }}</span>
+            <span data-i18n="dict_count"></span>
+        </div>
+    </div>
+    <button onclick="showAddRow()" class="btn-add-primary">
+        <span>+</span> <span data-i18n="btn_add_word"></span>
+    </button>
+</div>
+
+<div class="dict-table">
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%" class="sortable" onclick="sortDictionary(0)">
+                    <span data-i18n="dict_word"></span>
+                    <span id="sort-icon-0" class="sort-indicator">↕</span>
+                </th>
+                <th style="width: 15%" data-i18n="dict_pos"></th>
+                <th style="width: 25%" data-i18n="dict_meaning"></th>
+                <th style="width: 25%" class="sortable" onclick="sortDictionary(3)">
+                    <span data-i18n="dict_ipa"></span>
+                    <span id="sort-icon-3" class="sort-indicator">↕</span>
+                </th>
+                <th style="width: 15%" data-i18n="dict_action"></th>
+            </tr>
+        </thead>
+        <tbody id="dictBody">
+            {% include "partials/_dict_add_row.html" %}
+
+            {% for entry in dictionary %}
+                {% set index = loop.index0 %}
+                {% include "partials/_dict_row.html" %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // 排序狀態紀錄
+    let currentSort = { index: -1, asc: true };
+
+    function sortDictionary(colIndex) {
+        const tableBody = document.getElementById('dictBody');
+        const addRow = document.getElementById('addRow');
+        // 只選取 class 為 .dict-row 的 tr，確保不會排到隱藏的新增行
+        const rows = Array.from(tableBody.querySelectorAll('tr.dict-row'));
+        
+        // 切換升降冪
+        if (currentSort.index === colIndex) {
+            currentSort.asc = !currentSort.asc;
+        } else {
+            currentSort.index = colIndex;
+            currentSort.asc = true;
+        }
+
+        // 更新 UI 圖標
+        document.querySelectorAll('.sort-indicator').forEach(el => el.innerText = '↕');
+        document.getElementById(`sort-icon-${colIndex}`).innerText = currentSort.asc ? '▲' : '▼';
+
+        // 使用 Intl.Collator 處理 IPA 字元排序
+        const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+        rows.sort((a, b) => {
+            const valA = a.cells[colIndex].textContent.trim();
+            const valB = b.cells[colIndex].textContent.trim();
+            const res = collator.compare(valA, valB);
+            return currentSort.asc ? res : -res;
+        });
+
+        // 重新填充表格
+        tableBody.innerHTML = '';
+        if (addRow) tableBody.appendChild(addRow); // 保持新增行在最上
+        rows.forEach(row => tableBody.appendChild(row));
+    }
+
+    function filterDictionary() {
+        const input = document.getElementById('dictSearch');
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll('#dictBody tr.dict-row');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
+
+    // --- 以下為你原有的 CRUD 邏輯 ---
+    function toggleEdit(index) {
+        const viewEls = document.querySelectorAll(`.view-mode-${index}`);
+        const editEls = document.querySelectorAll(`.edit-mode-${index}`);
+        const isEditing = viewEls[0].style.display === 'none';
+        viewEls.forEach(el => el.style.display = isEditing ? '' : 'none');
+        editEls.forEach(el => el.style.display = isEditing ? 'none' : 'flex');
+    }
+
+    function saveRow(index) {
+        const row = document.getElementById(`row-${index}`);
+        const data = {
+            index: index,
+            word: row.querySelector('input[name="word"]').value,
+            pos: row.querySelector('select[name="pos"]').value,
+            translation: row.querySelector('input[name="translation"]').value,
+            ipa: row.querySelector('input[name="ipa"]').value
+        };
+
+        fetch('/dictionary/api/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.success) location.reload();
+            else alert("Save failed");
+        });
+    }
+
+    function deleteRow(index) {
+        if (!confirm("Are you sure?")) return;
+        fetch('/dictionary/api/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ index: index })
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.success) location.reload();
+        });
+    }
+
+    function showAddRow() {
+        document.getElementById('addRow').style.display = 'table-row';
+        document.getElementById('new-word').focus();
+    }
+
+    function hideAddRow() {
+        document.getElementById('addRow').style.display = 'none';
+        ['new-word', 'new-translation', 'new-ipa'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function saveNewWord() {
+        const data = {
+            word: document.getElementById('new-word').value,
+            pos: document.getElementById('new-pos').value,
+            translation: document.getElementById('new-translation').value,
+            ipa: document.getElementById('new-ipa').value
+        };
+
+        if (!data.word) { alert("Please enter a word"); return; }
+
+        fetch('/dictionary/api/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.success) location.reload();
+            else alert("Add failed");
+        });
+    }
+</script>
+{% endblock %}  

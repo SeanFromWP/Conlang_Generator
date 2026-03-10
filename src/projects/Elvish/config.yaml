@@ -1,0 +1,105 @@
+phonology:
+  inventory_consonants:
+  - b
+  - c
+  - d
+  - m
+  - n
+  - p
+  - t
+  - ʈ
+  inventory_vowels:
+  - a
+  - e
+  - i
+  - ḭ
+  - o
+  - y
+  - ɛ
+  - ɪ
+  inventory:
+  - b
+  - c
+  - d
+  - m
+  - n
+  - p
+  - t
+  - ʈ
+  - a
+  - e
+  - i
+  - ḭ
+  - o
+  - y
+  - ɛ
+  - ɪ
+  weights:
+    consonants:
+      b: 10
+      c: 10
+      d: 10
+      m: 10
+      n: 10
+      p: 10
+      t: 10
+      ʈ: 10
+    vowels:
+      a: 10
+      e: 10
+      ɛ: 10
+      i: 10
+      ḭ: 10
+      ɪ: 10
+      o: 10
+      y: 10
+  custom_order: ''
+  categories:
+    C:
+    - b
+    - c
+    - d
+    - m
+    - ʈ
+    - p
+    - n
+    V:
+    - i
+    - ɛ
+    - e
+    - a
+    - o
+    - ḭ
+    - ɪ
+sec_morphology_type:
+  opt_morphology:
+  - type_analytic
+  opt_synthetic_type:
+  - type_agglutinative
+  opt_word_order:
+  - VSO
+sec_universal_features:
+  bools:
+    feat_gender: true
+    feat_number: true
+  settings:
+    feat_number:
+    - num_singular
+    - num_dual
+    - num_trial
+sec_noun_syntax:
+  bools:
+    feat_case: true
+  settings:
+    feat_case:
+    - case_inessive
+    - case_illative
+    - case_genitive
+    - case_dative
+    - case_translative
+sec_verb_syntax:
+  bools:
+    feat_conjugation: true
+  settings:
+    feat_conjugation:
+    - marker_type

@@ -1,0 +1,220 @@
+/* ==========================================================================
+   1. 導航與分頁系統 (Tabs & Toggle Bar) 
+   ========================================================================== */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 2px;
+}
+
+.tab-btn, .sub-tab-btn {
+    padding: 10px 24px;
+    border: none;
+    background: none;
+    font-weight: 600;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    bottom: -2px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.tab-btn:hover, .sub-tab-btn:hover {
+    color: var(--primary);
+    background: var(--primary-glass);
+}
+
+.tab-btn.active, .sub-tab-btn.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+}
+
+.sub-tabs-bar { 
+    margin-top: 20px; 
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.sub-tabs-bar .tabs { 
+    border-bottom-width: 1px; 
+    margin-bottom: 15px; 
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ==========================================================================
+   2. 核心 Pill 系統 (通用標籤風格)
+   ========================================================================== */
+
+/* 基礎標籤：適用於功能特性、分類標籤等 */
+.glass-pill, .tag-chip, .editable-pill, .custom-pill-tag, .interactive-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 16px;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border, #e2e2e2);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 40px;
+    box-sizing: border-box;
+    position: relative;
+    user-select: none;
+    font-size: 0.9rem;
+    font-weight: 400 !important;
+    color: #555; 
+}
+
+.glass-pill:hover, .tag-chip:hover, .editable-pill:hover, .custom-pill-tag:hover, .interactive-pill:hover {
+    border-color: #bbb;
+    background: #f0f1f2;
+}
+
+/* 選中狀態 */
+.glass-pill:has(input:checked), 
+.tag-chip:focus-within, 
+.editable-pill:focus-within,
+.custom-pill-tag:focus-within,
+.interactive-pill:has(input:not([value="0"])) {
+    border-color: var(--primary-border) !important;
+    background: var(--primary-glass) !important;
+    color: var(--primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px var(--primary-glass);
+}
+
+/* 隱形輸入框修正 */
+.editable-pill input, .custom-pill-tag input, .glass-pill input[type="text"] {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: inherit;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    min-width: 30px;
+}
+
+/* ==========================================================================
+   3. IPA 專用按鈕 (獨立樣式：緊湊不寬)
+   ========================================================================== */
+
+.table-ipa-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 縮小間距防止太寬 */
+    padding: 0 8px; 
+    min-width: 34px;
+    height: 34px;
+    background: transparent;
+    border: 1px solid #e2e2e2;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.table-ipa-item:hover {
+    border-color: #bbb;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.table-ipa-item:has(input:checked) {
+    border-color: var(--primary) !important;
+    background: var(--primary-glass) !important;
+    color: var(--primary) !important;
+}
+
+/* 內部的符號文字：維持灰黑細體，縮減字距 */
+.ipa-symbol-text {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #555;
+    font-family: "Segoe UI", serif;
+    letter-spacing: -0.5px;
+}
+
+.table-ipa-item:has(input:checked) .ipa-symbol-text {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* 隱藏 Checkbox */
+.glass-pill input[type="checkbox"], 
+.glass-pill input[type="radio"],
+.table-ipa-item input[type="checkbox"] {
+    display: none !important;
+}
+
+/* ==========================================================================
+   4. 配置面板與表格佈局
+   ========================================================================== */
+.config-panel {
+    background: var(--bg-card, #fafafa);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 25px;
+}
+
+.ipa-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    table-layout: auto; 
+    margin: 10px 0; 
+}
+
+.ipa-table th, .ipa-table td { 
+    border: 1px solid #f0f0f0; 
+    padding: 6px 4px; /* 緊湊格間距 */
+    text-align: center; 
+    height: 44px; 
+}
+
+.ipa-table th { 
+    font-size: 0.8rem; 
+    color: #999; 
+    font-weight: 400; 
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   5. 管理工具與輔助 (Utilities)
+   ========================================================================== */
+
+.btn-tag-add {
+    background: none;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    border-radius: 50px;
+    padding: 0 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-tag-remove {
+    background: none; border: none; color: #999;
+    cursor: pointer; font-size: 1.1rem; margin-left: 6px;
+    display: flex; align-items: center; line-height: 1;
+}
+
+.label-caps { font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-sub); margin-bottom: 8px; display: block; text-transform: uppercase; }
+.weight-zone, .ipa-zone { display: none; }
+.weight-zone.active, .ipa-zone.active { display: block; }

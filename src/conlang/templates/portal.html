@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_name %}System Dashboard{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px;">
+    <h1 style="font-size: 2.5rem; font-weight: 300; margin-bottom: 10px;">Welcome.</h1>
+    <p style="color: #666; line-height: 1.6; margin-bottom: 40px;">
+        這是你的語言構造工具箱。請點擊左側導覽列開始設計語法規則或定義音標庫。
+    </p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
+            <div style="color: var(--primary); font-weight: bold; margin-bottom: 10px;">核心設定檔</div>
+            <code style="background: #f1f3f4; padding: 4px 8px; border-radius: 4px;">default.yaml</code>
+            <p style="font-size: 0.85rem; color: #888; margin-top: 10px;">所有儲存的變更都會寫入此檔案。</p>
+        </div>
+        <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border);">
+            <div style="color: #0d652d; font-weight: bold; margin-bottom: 10px;">系統狀態</div>
+            <span style="font-size: 0.9rem;">● 運行中 (Port 5000)</span>
+            <p style="font-size: 0.85rem; color: #888; margin-top: 10px;">Flask Debug Mode 已啟動。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

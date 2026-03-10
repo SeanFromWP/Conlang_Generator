@@ -1,0 +1,89 @@
+.tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--border); justify-content: flex-start; }
+    .tab-btn, .sub-tab-btn { padding: 12px 24px; border: none; cursor: pointer; font-weight: 600; background: transparent; color: var(--text-sub); border-bottom: 3px solid transparent; margin-bottom: -2px; font-family: inherit; font-size: 0.95rem; transition: 0.2s; white-space: nowrap; }
+    .tab-btn.active, .sub-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .sub-tabs-bar { margin-top: 20px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* --- Zone 控制 --- */
+    .weight-zone { display: none; }
+    .weight-zone.active { display: block; }
+    .weight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+
+    /* --- 核心卡片樣式 --- */
+    .interactive-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; height: 75px; }
+    .interactive-card:hover { background: #f1f3f4; transform: scale(1.02); }
+    .interactive-card:has(input:not([value="0"])) { background: var(--primary-glass); border-color: var(--primary-border); }
+
+    .sym-display { font-size: 1.6rem; font-family: "Segoe UI", serif; min-width: 45px; text-align: center; color: var(--primary); }
+    .slider-box { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+    .label-caps { font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-sub); margin-bottom: 4px; display: block; }
+    .val-label { font-family: monospace; font-weight: bold; float: right; color: var(--primary); }
+    input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; margin-top: 4px; }
+
+    /* --- 排序池樣式 --- */
+    .sort-config-zone { background: #fafafa; border: 1px solid #eee; border-radius: 10px; padding: 15px; margin-bottom: 24px; }
+    .sort-pool { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sort-chip { padding: 6px 14px; background: white; border: 1px solid #eee; border-radius: 6px; cursor: grab; font-family: "Segoe UI", serif; font-size: 1rem; transition: 0.2s; }
+    .sort-chip:hover { border-color: var(--primary); background: var(--primary-glass); }
+    .sort-chip.dragging { opacity: 0.5; background: #eee; }
+    .group-header { font-size: 0.8rem; font-weight: bold; color: var(--text-sub); text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
+
+    .category-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fdfdfd;
+    padding: 15px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+    .cat-code-input {
+        width: 60px;
+        padding: 8px;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+    .cat-symbols-box {
+        flex-grow: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        min-height: 40px;
+        padding: 8px;
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 4px;
+    }
+    .cat-chip {
+        padding: 2px 8px;
+        background: var(--primary-glass);
+        color: var(--primary);
+        border-radius: 4px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .cat-chip .remove { cursor: pointer; font-weight: bold; }
+
+
+    /* 類別項目被選中編輯時的樣式 */
+.category-item.editing {
+    border: 2px solid var(--primary);
+    background: var(--primary-glass);
+    box-shadow: 0 0 8px var(--primary-border);
+}
+
+/* 讓 Picker 裡的卡片小一點方便選取 */
+#category-picker-area .interactive-card {
+    cursor: copy;
+    height: 60px;
+}
+#category-picker-area .slider-box {
+    display: none; /* 在 Picker 模式隱藏滑桿 */
+}

@@ -1,0 +1,31 @@
+{# 這裡直接延用父級作用域的變數: type, ipa #}
+<div id="{{type}}-tab" class="tab-content {{ 'active' if type == 'consonant' }}">
+    
+    <div class="config-panel">
+        <div class="label-caps">
+            <span data-i18n="label_features"></span>
+        </div>
+        
+        <div class="grid-auto-layout">
+            {# 確保這裡的 key 是對應到 ipa.diacritics 的原始 key #}
+            {% for key, info in ipa.diacritics.items() if info.applies_to == (type + "s") %}
+            <label class="glass-pill">
+                <input type="checkbox" class="dia-trigger" 
+                       data-type="{{type}}" 
+                       data-key="{{key}}" 
+                       data-symbol="{{info.symbol}}">
+                <span data-i18n="{{key}}"></span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="sub-tabs-bar">
+        <div id="{{type}}-sub-bar" class="tabs">
+            {# 這裡會由 JS 的 updateSubTabs 動態填入按鈕 #}
+        </div>
+    </div>
+
+    {# 這裡由 JS 的 initAllZones 填入 ipa-zone，內含各個表格 #}
+    <div id="{{type}}-display-area" class="ipa-display-container"></div>
+</div>

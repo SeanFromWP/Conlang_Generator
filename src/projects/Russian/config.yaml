@@ -1,0 +1,88 @@
+sec_morphology_type:
+  opt_morphology:
+  - type_analytic
+  opt_synthetic_type:
+  - type_fusional
+  opt_word_order:
+  - SVO
+sec_universal_features:
+  bools:
+    feat_gender: true
+    feat_number: true
+    feat_alignment: true
+  settings:
+    feat_gender:
+    - gen_masculine
+    - gen_feminine
+    - gen_neutral
+    feat_number:
+    - num_singular
+    - num_plural
+    feat_alignment:
+    - align_nominative
+sec_noun_syntax:
+  bools:
+    feat_case: true
+    feat_number: true
+  settings:
+    feat_case:
+    - case_nominative
+    - case_genitive
+    - case_dative
+    - case_accusative
+    - case_instrumental
+    - case_locative
+    feat_number:
+    - num_singular
+    - num_dual
+sec_verb_syntax:
+  bools:
+    feat_tense: true
+    feat_mood: true
+  settings:
+    feat_tense:
+    - tense_past
+    - tense_present
+    feat_mood:
+    - mood_imperative
+    - mood_indicative
+morphology:
+  sec_noun_syntax:
+    selected_matrix_dims:
+    - univ|feat_gender
+    - univ|feat_number
+    - local|feat_case
+    markers:
+      gen_masculine+num_singular+case_nominative:
+      - marker: + ∅ / C_#
+      gen_masculine+num_plural+case_nominative:
+      - marker: "+ ɨ / H_#\r\n+ i / S_#"
+      gen_feminine+num_singular+case_nominative:
+      - marker: "+ a / H_#\r\n+ ja / S_#"
+      gen_feminine+num_plural+case_nominative:
+      - marker: "+ ɨ / H_#\r\n+ i / S_#"
+      gen_neutral+num_singular+case_nominative:
+      - marker: "+ o / H_#\r\n+ e / S_#"
+      gen_neutral+num_plural+case_nominative:
+      - marker: "+ a / H_#\r\n+ ja / S_#"
+phonology:
+  inventory_consonants:
+  - b
+  - p
+  inventory_vowels:
+  - i
+  - y
+  inventory:
+  - b
+  - p
+  - i
+  - y
+  weights:
+    consonants:
+      b: 36
+      p: 10
+    vowels:
+      i: 10
+      y: 10
+  custom_order: b i p y
+  categories: {}

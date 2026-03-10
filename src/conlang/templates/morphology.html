@@ -1,0 +1,215 @@
+{% extends "layout.html" %}
+
+{% block page_name %}
+    <span data-i18n="nav_morphology_management"></span>
+{% endblock %}
+
+{% block actions %}
+    <button type="submit" form="morph-form" class="btn btn-save">
+        <i class="fas fa-save"></i> <span data-i18n="btn_save_config"></span>
+    </button>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/morphology.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="tabs">
+    {% for sec_name, sec_data in config.items() if sec_name.startswith('sec_') and sec_name != 'sec_universal_features' %}
+        <button type="button" class="tab-btn" data-sec="{{ sec_name }}" onclick="switchMainTab('{{ sec_name }}')">
+            <span data-i18n="sec_{{ sec_name.replace('sec_', '').replace('_syntax', '') }}">
+                {{ sec_name.replace('sec_', '').replace('_syntax', '') | capitalize }}
+            </span>
+        </button>
+    {% endfor %}
+</div>
+
+<form id="morph-form" method="POST">
+    {% for sec_name, sec_data in config.items() if sec_name.startswith('sec_') and sec_name != 'sec_universal_features' %}
+    <div id="panel-{{ sec_name }}" class="tab-content">
+        
+        <div class="sort-config-zone">
+            <div class="group-header">
+                <i class="fas fa-layer-group"></i> <span data-i18n="label_setup_chart"></span>
+            </div>
+            <div class="sort-pool">
+                {% set saved_dims = config.get('morphology', {}).get(sec_name, {}).get('selected_matrix_dims', []) %}
+                
+                {# 通用特徵 (Universal) #}
+                {% set univ_bools = config.get('sec_universal_features', {}).get('bools', {}) %}
+                {% for feat_id, is_on in univ_bools.items() if is_on %}
+                    {% if feat_id != 'feat_alignment' %}
+                        {% set val = "univ|" + feat_id %}
+                        <label class="custom-pill-tag {% if val in saved_dims %}active{% endif %}">
+                            <input type="checkbox" name="dims|{{ sec_name }}[]" class="matrix-dim" value="{{ val }}" 
+                                {% if val in saved_dims %}checked{% endif %} 
+                                style="display: none;" 
+                                onchange="this.parentElement.classList.toggle('active', this.checked); generateMatrix('{{ sec_name }}')">
+                            <span style="margin-right:5px; font-weight:700; color:var(--primary);">[U]</span> 
+                            <span data-i18n="{{ feat_id }}"></span>
+                        </label>
+                    {% endif %}
+                {% endfor %}
+
+                {# 本地特徵 (Local) #}
+                {% set local_bools = sec_data.get('bools', {}) %}
+                {% for feat_id, is_on in local_bools.items() if is_on %}
+                    {% set val = "local|" + feat_id %}
+                    <label class="custom-pill-tag {% if val in saved_dims %}active{% endif %}">
+                        <input type="checkbox" name="dims|{{ sec_name }}[]" class="matrix-dim" value="{{ val }}" 
+                            {% if val in saved_dims %}checked{% endif %} 
+                            style="display: none;" 
+                            onchange="this.parentElement.classList.toggle('active', this.checked); generateMatrix('{{ sec_name }}')">
+                        <span data-i18n="{{ feat_id }}"></span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="matrix-container-{{ sec_name }}"></div>
+    </div>
+    {% endfor %}
+</form>
+<script>
+    // 獲取完整 Config 資料
+    const FULL_CONFIG = {{ config | tojson }};
+
+    /**
+     * 切換主要分頁
+     */
+    function switchMainTab(secId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === secId));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `panel-${secId}`));
+        
+        generateMatrix(secId);
+        localStorage.setItem('morph_last_tab', secId);
+    }
+
+    /**
+     * 全域按鍵監聽 (Ctrl+Enter 儲存)
+     */
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            if (e.ctrlKey || e.metaKey) {
+                document.getElementById('morph-form').submit();
+            } else if (e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault(); 
+            }
+        }
+    });
+
+    /**
+     * 輔助工具：生成帶有 i18n 標記的 HTML 字串
+     */
+    function i18nSpan(key, fallback) {
+        return `<span data-i18n="${key}"></span>`;
+    }
+
+    /**
+     * 核心：動態矩陣生成邏輯
+     */
+    function generateMatrix(secName) {
+        const container = document.getElementById(`matrix-container-${secName}`);
+        const selectedDoms = Array.from(document.querySelectorAll(`#panel-${secName} .matrix-dim:checked`));
+
+        if (selectedDoms.length === 0) {
+            container.innerHTML = `<p style="padding: 40px; text-align: center; color: var(--text-sub); border: 2px dashed var(--border); border-radius: 10px;" data-i18n="morph_empty_msg"></p>`;
+            if (window.applyTranslations) window.applyTranslations();
+            return;
+        }
+
+        const dims = selectedDoms.map(dom => {
+            const [type, featId] = dom.value.split('|');
+            const sourceKey = (type === 'univ') ? 'sec_universal_features' : secName;
+            return {
+                id: featId,
+                items: FULL_CONFIG[sourceKey]?.settings?.[featId] || []
+            };
+        });
+
+        // --- 關鍵修正：路徑對齊 morphology.[secName].markers ---
+        const existingMarkers = FULL_CONFIG.morphology?.[secName]?.markers || {};
+        
+        if (dims.length === 1) renderList(container, secName, dims[0], existingMarkers);
+        else renderTable(container, secName, dims, existingMarkers);
+
+        if (window.applyTranslations) window.applyTranslations();
+    }
+
+    /**
+     * 渲染一維列表
+     */
+    function renderList(container, secName, dim, existing) {
+        let html = `<div class="matrix-wrapper"><table class="morph-matrix-table"><tbody>`;
+        dim.items.forEach(item => {
+            // 抓取 marker 內容
+            const saved = (existing[item] && existing[item][0]) || {marker:''};
+            html += `<tr>
+                <td class="matrix-label-col">${i18nSpan(item, item.split('_').pop().toUpperCase())}</td>
+                <td><textarea name="matrix|${secName}|${item}|content[]" class="word-cell-textarea" placeholder=" "> ${saved.marker || ''}</textarea></td>
+            </tr>`;
+        });
+        container.innerHTML = html + `</tbody></table></div>`;
+    }
+
+    /**
+     * 渲染二維或多維矩陣
+     */
+    function renderTable(container, secName, dims, existing) {
+        const yDim = dims[0], xDim = dims[1], extraDims = dims.slice(2);
+        
+        let extraCombos = [[]];
+        if (extraDims.length > 0) {
+            const cart = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+            extraCombos = extraDims.map(d => d.items).reduce((a, b) => cart(a, b));
+            if (!Array.isArray(extraCombos[0])) extraCombos = extraCombos.map(i => [i]);
+        }
+
+        let html = '';
+        extraCombos.forEach(extra => {
+            if (extra.length > 0) {
+                const groupLabel = extra.map(e => i18nSpan(e, e.split('_').pop().toUpperCase())).join(' + ');
+                html += `<div class="matrix-group-title">${groupLabel}</div>`;
+            }
+
+            html += `<div class="matrix-wrapper"><table class="morph-matrix-table">
+                <thead><tr>
+                    <th>${i18nSpan(yDim.id)} ↓ / ${i18nSpan(xDim.id)} →</th>`;
+            xDim.items.forEach(x => html += `<th>${i18nSpan(x, x.split('_').pop().toUpperCase())}</th>`);
+            html += `</tr></thead><tbody>`;
+
+            yDim.items.forEach(y => {
+                html += `<tr><td class="matrix-label-col">${i18nSpan(y, y.split('_').pop().toUpperCase())}</td>`;
+                xDim.items.forEach(x => {
+                    const key = [y, x, ...extra].join('+');
+                    // 抓取 marker 內容
+                    const saved = (existing[key] && existing[key][0]) || {marker:''};
+                    html += `<td><textarea name="matrix|${secName}|${key}|content[]" class="word-cell-textarea" placeholder=" ">${saved.marker || ''}</textarea></td>`;
+                });
+                html += `</tr>`;
+            });
+            html += `</tbody></table></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    /**
+ * 切換 Chip 的選中視覺效果
+ */
+function toggleChipActive(input) {
+    const chip = input.closest('.sort-chip');
+    if (input.checked) {
+        chip.classList.add('active');
+    } else {
+        chip.classList.remove('active');
+    }
+}
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        const lastTab = localStorage.getItem('morph_last_tab') || document.querySelector('.tab-btn')?.dataset.sec;
+        if (lastTab) switchMainTab(lastTab);
+    });
+</script>
+{% endblock %}

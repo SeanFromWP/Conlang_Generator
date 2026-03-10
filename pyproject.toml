@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conlang"
+version = "0.1.0"
+description = "我的 Java 風格 Python 專案"
+# 這裡就是像 Java 的 dependencies 區塊
+dependencies = [
+    "PyYAML>=6.0",
+    "Flask>=3.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
