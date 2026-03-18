@@ -79,20 +79,20 @@
 
             <form action="{{ url_for('views.portal') }}" method="POST">
                 <div style="margin-bottom: 20px;">
-                    <label class="label-caps" data-i18n="label_project_name">Project Name</label>
+                    <label class="label-caps" data-i18n="label_project_name"></label>
                     <input type="text" name="project_name" required class="inplace-input" placeholder="e.g. MyConlang" pattern="[a-zA-Z0-9_-]+">
                 </div>
                 <button type="submit" class="btn btn-save" style="width: 100%; justify-content: center;">
-                    <span data-i18n="btn_create_and_switch">Create & Switch</span>
+                    <span data-i18n="btn_create_and_switch"></span>
                 </button>
             </form>
 
             <div class="import-zone">
-                <p class="label-caps" style="margin-bottom: 10px; color: var(--secondary);" data-i18n="label_choose_local">Import Directory</p>
+                <p class="label-caps" style="margin-bottom: 10px; color: var(--secondary);" data-i18n="label_choose_local"></p>
                 <form action="{{ url_for('views.import_project') }}" method="POST" enctype="multipart/form-data">
                     <input type="file" name="project_files" webkitdirectory directory multiple required style="font-size: 0.7rem; width: 100%; margin-bottom: 10px;">
                     <button type="submit" class="btn btn-outline" style="width: 100%; font-size: 0.8rem; height: 32px; justify-content: center;">
-                        <span data-i18n="label_choose">Upload Files</span>
+                        <span data-i18n="label_choose"></span>
                     </button>
                 </form>
             </div>
@@ -102,11 +102,11 @@
     <main class="workspace-main">
         <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
             <div>
-                <h1 style="margin: 0; font-size: 1.8rem;" data-i18n="label_project_portal">Project Portal</h1>
-                <p style="margin: 5px 0 0 0; opacity: 0.6;" data-i18n="label_existing_workspaces">Manage your projects</p>
+                <h1 style="margin: 0; font-size: 1.8rem;" data-i18n="label_project_portal"></h1>
+                <p style="margin: 5px 0 0 0; opacity: 0.6;" data-i18n="label_existing_workspaces"></p>
             </div>
             <div style="text-align: right;">
-                <span class="label-caps" data-i18n="label_total_projects">Workspaces</span>
+                <span class="label-caps" data-i18n="label_total_projects"></span>
                 <span style="font-weight: 700; color: var(--primary); font-family: monospace; font-size: 1.2rem;">{{ projects|length }}</span>
             </div>
         </div>
@@ -133,28 +133,33 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 20px; display: flex; gap: 8px; align-items: center; position: relative; z-index: 10;">
-                    <a href="{{ url_for('views.select_project', name=p) }}" 
-                       class="btn {% if p == current %}btn-save{% else %}btn-outline{% endif %}" 
-                       style="flex: 1; border-radius: 8px; justify-content: center; text-decoration: none; display: flex; align-items: center; height: 38px;">
-                        <span data-i18n="btn_switch_to">Switch</span>
-                    </a>
-                    
-                    <div class="action-group">
-                        <button type="button" class="btn-icon download-btn" 
-                                data-project="{{ p }}"
-                                data-files='{{ project_files[p] | tojson if project_files and p in project_files else "[]" }}'
-                                title="Download">
-                            💾
-                        </button>
+            <div style="margin-top: 20px; display: flex; gap: 8px; align-items: center; position: relative; z-index: 10;">
+                <a href="{{ url_for('views.select_project', name=p) }}" 
+                class="btn {% if p == current %}btn-save{% else %}btn-outline{% endif %}" 
+                style="flex: 1; text-decoration: none;">
+                    <span data-i18n="btn_switch_to">Switch</span>
+                </a>
+                
+                <div class="action-group">
+                    <button type="button" 
+                            class="btn btn-outline download-btn" 
+                            style="width: 38px; padding: 0; justify-content: center;"
+                            data-project="{{ p }}"
+                            data-files='{{ project_files[p] | tojson if project_files and p in project_files else "[]" }}'
+                            title="Download"
+                            data-i18n="btn_download">
+                    </button>
 
-                        <form action="{{ url_for('views.delete_project', name=p) }}" method="POST" 
-                              onsubmit="return confirm('⚠️ DANGER: Delete project [{{ p }}] permanently?');" style="margin: 0;">
-                            <button type="submit" class="btn-icon btn-delete-sm" title="Delete">
-                                🗑️
-                            </button>
-                        </form>
-                    </div>
+                    <form action="{{ url_for('views.delete_project', name=p) }}" method="POST" 
+                        onsubmit="return confirm('⚠️ DANGER: Delete project [{{ p }}] permanently?');" 
+                        style="margin: 0; display: inline-flex;">
+                        <button type="submit" 
+                                class="btn btn-outline btn-delete-sm" 
+                                style="width: 38px; padding: 0; justify-content: center;"
+                                title="Delete" 
+                                data-i18n="btn_trash">
+                        </button>
+                    </form>
                 </div>
             </div>
             {% endfor %}
