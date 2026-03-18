@@ -1,34 +1,41 @@
-import os, json, zipfile, io
-from flask import Blueprint, render_template, request, redirect, url_for, session, send_file
+import os
+import json
+import io
+from flask import Blueprint, render_template, request, redirect, url_for, session, send_from_directory, abort
+from werkzeug.utils import secure_filename
 import conlang.paths as paths
 from conlang.utils import utils
 
 views_bp = Blueprint('views', __name__)
 
+# --- 核心防禦工具：檢查檔案是否為合法 YAML ---
+def is_safe_yaml(filename):
+    return filename.lower().endswith(('.yaml', '.yml'))
+
 # --- 1. 專案管理 (Portal) ---
 @views_bp.route('/', methods=['GET', 'POST'])
 def portal():
     if request.method == 'POST':
-        project_name = request.form.get('project_name', '').strip()
+        # 使用 secure_filename 清理輸入，防止路徑注入
+        project_name = secure_filename(request.form.get('project_name', '').strip())
         if project_name:
             # 確保資料夾存在
             paths.get_project_dir(project_name)
             session['current_project'] = project_name
             return redirect(url_for('views.portal'))
 
-    # 1. 取得所有專案名稱
     all_projects = []
-    project_files = {} # 用來存每個專案下有哪些 YAML
+    project_files = {}
 
     if os.path.exists(paths.PROJECTS_ROOT):
+        # 僅列出資料夾名稱，不洩漏實體路徑
         all_projects = [d for d in os.listdir(paths.PROJECTS_ROOT) 
                         if os.path.isdir(os.path.join(paths.PROJECTS_ROOT, d))]
         
-        # 2. 掃描每個專案資料夾下的檔案（解決 No file available）
         for p in all_projects:
             p_path = os.path.join(paths.PROJECTS_ROOT, p)
-            # 只列出實體 YAML 檔
-            files = [f for f in os.listdir(p_path) if f.endswith(('.yaml', '.yml'))]
+            # 嚴格過濾：前端只會看到檔名，且只有 YAML
+            files = [f for f in os.listdir(p_path) if is_safe_yaml(f)]
             project_files[p] = files
 
     return render_template('portal.html', 
@@ -36,14 +43,24 @@ def portal():
                            project_files=project_files, 
                            current=session.get('current_project'))
 
-# 廢棄原有的 export_project (ZIP)，改用單檔導出配合前端 JS 批量觸發
-@views_bp.route('/export_file/<project_name>/<filename>')
-def export_file(project_name, filename):
-    project_dir = paths.get_project_dir(project_name)
-    file_path = os.path.join(project_dir, filename)
-    if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
-    return "File not found", 404
+# 安全修正：移除 URL 中的 project_name，強制從 Session 讀取
+# 這樣外部 fetch 沒辦法「盲猜」別人的專案名
+@views_bp.route('/export_file/<filename>')
+def export_file(filename):
+    curr_proj = session.get('current_project')
+    if not curr_proj:
+        abort(403, description="Please select a project first.")
+
+    # 1. 檔名去毒
+    safe_name = secure_filename(filename)
+    
+    # 2. 類型去毒：禁止 fetch .py, .pyc, .env 等
+    if not is_safe_yaml(safe_name):
+        abort(403, description="Access denied to non-YAML files.")
+
+    # 3. 範圍去毒：send_from_directory 會限制在該目錄內，禁止 ../ 穿越
+    project_dir = paths.get_project_dir(curr_proj)
+    return send_from_directory(project_dir, safe_name, as_attachment=True)
 
 @views_bp.route('/import', methods=['POST'])
 def import_project():
@@ -52,30 +69,37 @@ def import_project():
     if not uploaded_files or uploaded_files[0].filename == '':
         return "Error: No files selected", 400
 
-    # 判斷專案名稱：優先取資料夾路徑，若無則取檔名
+    # 判斷專案名稱：強制經過安全過濾
     first_path = uploaded_files[0].filename
     path_parts = [p for p in first_path.split('/') if p]
-    project_name = path_parts[0] if len(path_parts) > 1 else "Imported_Project"
+    raw_name = path_parts[0] if len(path_parts) > 1 else "Imported_Project"
+    project_name = secure_filename(raw_name)
 
     target_dir = paths.get_project_dir(project_name)
     os.makedirs(target_dir, exist_ok=True)
 
     saved_count = 0
     for file in uploaded_files:
-        fname = os.path.basename(file.filename)
-        if fname.endswith(('.yaml', '.yml')):
+        fname = secure_filename(os.path.basename(file.filename))
+        
+        # 防止覆蓋系統預設檔 (master.yaml / ipa.yaml)
+        if fname in ['master.yaml', 'ipa.yaml']:
+            fname = f"user_{fname}"
+
+        if is_safe_yaml(fname):
             file.save(os.path.join(target_dir, fname))
             saved_count += 1
             
     if saved_count == 0:
-        return "Error: No YAML files found in the upload.", 400
+        return "Error: No valid YAML files found.", 400
 
     session['current_project'] = project_name
     return redirect(url_for('views.portal'))
 
 @views_bp.route('/select_project/<name>')
 def select_project(name):
-    session['current_project'] = name
+    # 這裡也要過濾，防止惡意注入 session
+    session['current_project'] = secure_filename(name)
     return redirect(url_for('views.portal'))
 
 # --- 2. 核心編輯器 (IPA, Syntax, Morphology) ---
@@ -106,9 +130,13 @@ def ipa_management():
         for key, value in request.form.items():
             if key.startswith('weight_'):
                 p = key.replace('weight_', '')
-                val = int(value or 10)
+                try:
+                    val = int(value or 10)
+                except ValueError:
+                    val = 10
                 if p in c_list: weights['consonants'][p] = val
                 elif p in v_list: weights['vowels'][p] = val
+        
         phon.update({
             'weights': weights,
             'custom_order': request.form.get('custom_order_data', ""),
@@ -124,22 +152,29 @@ def syntax():
     master = utils.load_yaml(paths.MASTER_FILE)
     if request.method == 'POST':
         if request.form.get('action_type') == 'reset':
+            # 只保留音韻設定，重置其餘部分
             utils.save_yaml(config_file, {'phonology': config.get('phonology', {})})
             return redirect(url_for('views.syntax'))
+            
         new_config = config.copy()
+        # 清理舊的 Section 資料
         for key in list(new_config.keys()):
             if key.startswith('sec_'): del new_config[key]
+            
         for raw_key, values in request.form.lists():
             if '|' not in raw_key or raw_key.startswith('order|') or raw_key == 'action_type': continue
             parts = raw_key.split('|')
             vals = [v.strip() for v in values if v.strip()]
             if not vals: continue
+            
             if parts[0] == 'bools':
                 new_config.setdefault(parts[1], {}).setdefault('bools', {})[parts[2]] = True
             elif parts[0] == 'settings':
                 new_config.setdefault(parts[1], {}).setdefault('settings', {})[parts[2]] = vals
             elif len(parts) == 2:
                 new_config.setdefault(parts[0], {})[parts[1]] = vals
+                
+        # 處理排序邏輯
         for raw_key in request.form.keys():
             if not raw_key.startswith('order|'): continue
             sorted_list = request.form.get(raw_key).split()
@@ -155,6 +190,7 @@ def syntax():
                     curr = new_config[sec][cat]
                     if isinstance(curr, list):
                         new_config[sec][cat] = [x for x in sorted_list if x in curr]
+                        
         utils.save_yaml(config_file, new_config)
         return redirect(url_for('views.syntax'))
     return render_template('syntax.html', master=master, config=config)
