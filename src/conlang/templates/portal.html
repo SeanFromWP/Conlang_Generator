@@ -153,7 +153,6 @@
         </div>
     </main>
 </div>
-
 <script>
 document.addEventListener('click', function(e) {
     const downloadBtn = e.target.closest('.download-btn');
@@ -163,8 +162,17 @@ document.addEventListener('click', function(e) {
     e.stopPropagation();
 
     const projectName = downloadBtn.getAttribute('data-project');
+    const currentProject = "{{ current }}"; // 從 Jinja2 獲取當前 active 的專案名
     const filesStr = downloadBtn.getAttribute('data-files');
     
+    // --- 安全檢查：如果要下載的不是目前 Active 的專案，先強制切換 ---
+    if (projectName !== currentProject) {
+        if (confirm(`Switch to ${projectName} to download its files?`)) {
+            window.location.href = `/select_project/${projectName}?next_action=download`;
+        }
+        return;
+    }
+
     let files = [];
     try {
         files = JSON.parse(filesStr);
@@ -180,8 +188,8 @@ document.addEventListener('click', function(e) {
     files.forEach((filename, index) => {    
         setTimeout(() => {
             const link = document.createElement('a');
-            link.href = `/export_file/${projectName}/${filename}`;
-            link.download = filename;
+            link.href = `/export_file/${filename}`;
+            link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

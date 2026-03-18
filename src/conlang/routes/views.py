@@ -8,7 +8,7 @@ from conlang.utils import utils
 
 views_bp = Blueprint('views', __name__)
 
-# --- 核心防禦工具：檢查檔案是否為合法 YAML ---
+# --- 核心防禦工具 ---
 def is_safe_yaml(filename):
     return filename.lower().endswith(('.yaml', '.yml'))
 
@@ -16,10 +16,9 @@ def is_safe_yaml(filename):
 @views_bp.route('/', methods=['GET', 'POST'])
 def portal():
     if request.method == 'POST':
-        # 使用 secure_filename 清理輸入，防止路徑注入
         project_name = secure_filename(request.form.get('project_name', '').strip())
         if project_name:
-            # 確保資料夾存在
+            # 建立專案目錄並初始化
             paths.get_project_dir(project_name)
             session['current_project'] = project_name
             return redirect(url_for('views.portal'))
@@ -28,13 +27,12 @@ def portal():
     project_files = {}
 
     if os.path.exists(paths.PROJECTS_ROOT):
-        # 僅列出資料夾名稱，不洩漏實體路徑
         all_projects = [d for d in os.listdir(paths.PROJECTS_ROOT) 
                         if os.path.isdir(os.path.join(paths.PROJECTS_ROOT, d))]
         
         for p in all_projects:
             p_path = os.path.join(paths.PROJECTS_ROOT, p)
-            # 嚴格過濾：前端只會看到檔名，且只有 YAML
+            # 僅列出該專案資料夾下的 YAML 檔名
             files = [f for f in os.listdir(p_path) if is_safe_yaml(f)]
             project_files[p] = files
 
@@ -43,48 +41,38 @@ def portal():
                            project_files=project_files, 
                            current=session.get('current_project'))
 
-# 安全修正：移除 URL 中的 project_name，強制從 Session 讀取
-# 這樣外部 fetch 沒辦法「盲猜」別人的專案名
 @views_bp.route('/export_file/<filename>')
 def export_file(filename):
     curr_proj = session.get('current_project')
     if not curr_proj:
         abort(403, description="Please select a project first.")
 
-    # 1. 檔名去毒
     safe_name = secure_filename(filename)
-    
-    # 2. 類型去毒：禁止 fetch .py, .pyc, .env 等
     if not is_safe_yaml(safe_name):
-        abort(403, description="Access denied to non-YAML files.")
+        abort(403, description="Access denied.")
 
-    # 3. 範圍去毒：send_from_directory 會限制在該目錄內，禁止 ../ 穿越
+    # 確保只從目前選定的專案資料夾下載
     project_dir = paths.get_project_dir(curr_proj)
     return send_from_directory(project_dir, safe_name, as_attachment=True)
 
 @views_bp.route('/import', methods=['POST'])
 def import_project():
     uploaded_files = request.files.getlist('project_files')
-
     if not uploaded_files or uploaded_files[0].filename == '':
         return "Error: No files selected", 400
 
-    # 判斷專案名稱：強制經過安全過濾
     first_path = uploaded_files[0].filename
     path_parts = [p for p in first_path.split('/') if p]
-    raw_name = path_parts[0] if len(path_parts) > 1 else "Imported_Project"
-    project_name = secure_filename(raw_name)
+    project_name = secure_filename(path_parts[0] if len(path_parts) > 1 else "Imported_Project")
 
     target_dir = paths.get_project_dir(project_name)
-    os.makedirs(target_dir, exist_ok=True)
-
+    
     saved_count = 0
     for file in uploaded_files:
         fname = secure_filename(os.path.basename(file.filename))
-        
-        # 防止覆蓋系統預設檔 (master.yaml / ipa.yaml)
-        if fname in ['master.yaml', 'ipa.yaml']:
-            fname = f"user_{fname}"
+        # 保護關鍵檔名，避免被外部匯入覆蓋
+        if fname in ['ipa.yaml', 'master.yaml']:
+            fname = f"imported_{fname}"
 
         if is_safe_yaml(fname):
             file.save(os.path.join(target_dir, fname))
@@ -98,15 +86,17 @@ def import_project():
 
 @views_bp.route('/select_project/<name>')
 def select_project(name):
-    # 這裡也要過濾，防止惡意注入 session
     session['current_project'] = secure_filename(name)
     return redirect(url_for('views.portal'))
 
 # --- 2. 核心編輯器 (IPA, Syntax, Morphology) ---
 @views_bp.route('/ipa', methods=['GET', 'POST'])
 def ipa_tool():
+    # 使用重構後的 utils，獲取專案私有的 config
     config, config_file = utils.get_config()
-    ipa_data = utils.load_yaml(paths.IPA_FILE)
+    # IPA 參考資料維持讀取系統唯讀檔
+    ipa_data = utils.load_yaml(paths.DEFAULT_IPA)
+    
     if request.method == 'POST':
         if request.form.get('action_type') == 'reset_ipa':
             config.pop('phonology', None)
@@ -115,18 +105,20 @@ def ipa_tool():
             phon['inventory_consonants'] = sorted(list(set(request.form.getlist('ipa_consonant'))))
             phon['inventory_vowels'] = sorted(list(set(request.form.getlist('ipa_vowel'))))
             phon['inventory'] = phon['inventory_consonants'] + phon['inventory_vowels']
-        utils.save_yaml(config_file, config)
+        
+        utils.save_config(config)
         return redirect(url_for('views.ipa_tool')) 
     return render_template('ipa.html', ipa=ipa_data, config=config)
 
 @views_bp.route('/ipa_management', methods=['GET', 'POST'])
 def ipa_management():
-    config, config_file = utils.get_config()
+    config, _ = utils.get_config()
     if request.method == 'POST':
         phon = config.setdefault('phonology', {})
         weights = {'consonants': {}, 'vowels': {}}
         c_list = phon.get('inventory_consonants', [])
         v_list = phon.get('inventory_vowels', [])
+        
         for key, value in request.form.items():
             if key.startswith('weight_'):
                 p = key.replace('weight_', '')
@@ -142,22 +134,23 @@ def ipa_management():
             'custom_order': request.form.get('custom_order_data', ""),
             'categories': json.loads(request.form.get('custom_categories_json', '{}'))
         })
-        utils.save_yaml(config_file, config)
+        utils.save_config(config)
         return redirect(url_for('views.ipa_management'))
-    return render_template('ipa_management.html', config=config, ipa=utils.load_yaml(paths.IPA_FILE))
+    return render_template('ipa_management.html', config=config, ipa=utils.load_yaml(paths.DEFAULT_IPA))
 
 @views_bp.route('/syntax', methods=['GET', 'POST'])
 def syntax():
-    config, config_file = utils.get_config()
-    master = utils.load_yaml(paths.MASTER_FILE)
+    config, _ = utils.get_config()
+    # 讀取系統唯讀範本作為結構參考，不讀取 PACKAGE_DIR 下的 master.yaml
+    master = utils.load_yaml(paths.DEFAULT_MASTER)
+    
     if request.method == 'POST':
         if request.form.get('action_type') == 'reset':
-            # 只保留音韻設定，重置其餘部分
-            utils.save_yaml(config_file, {'phonology': config.get('phonology', {})})
+            # 重置時，僅保留音韻設定，儲存到專案私有的 config
+            utils.save_config({'phonology': config.get('phonology', {})})
             return redirect(url_for('views.syntax'))
             
         new_config = config.copy()
-        # 清理舊的 Section 資料
         for key in list(new_config.keys()):
             if key.startswith('sec_'): del new_config[key]
             
@@ -174,7 +167,7 @@ def syntax():
             elif len(parts) == 2:
                 new_config.setdefault(parts[0], {})[parts[1]] = vals
                 
-        # 處理排序邏輯
+        # 排序邏輯
         for raw_key in request.form.keys():
             if not raw_key.startswith('order|'): continue
             sorted_list = request.form.get(raw_key).split()
@@ -191,13 +184,13 @@ def syntax():
                     if isinstance(curr, list):
                         new_config[sec][cat] = [x for x in sorted_list if x in curr]
                         
-        utils.save_yaml(config_file, new_config)
+        utils.save_config(new_config)
         return redirect(url_for('views.syntax'))
     return render_template('syntax.html', master=master, config=config)
 
 @views_bp.route('/morphology', methods=['GET', 'POST'])
 def morphology_mgr():
-    config, config_file = utils.get_config()
+    config, _ = utils.get_config()
     if request.method == 'POST':
         new_morphology = {}
         for key, values in request.form.lists():
@@ -213,8 +206,9 @@ def morphology_mgr():
                 contents = request.form.getlist(key)
                 pairs = [{'marker': c.strip()} for c in contents if c.strip()]
                 if pairs: new_morphology.setdefault(section, {}).setdefault('markers', {})[combo_key] = pairs
+        
         config['morphology'] = new_morphology
-        utils.save_yaml(config_file, config)
+        utils.save_config(config)
         return redirect(url_for('views.morphology_mgr'))
     return render_template('morphology.html', config=config)
 
@@ -226,5 +220,6 @@ def lexicon():
 
 @views_bp.route('/dictionary')
 def view_dictionary():
+    # get_lexicon 內部也已經改為 Session 感知
     lex_data, _ = utils.get_lexicon()
     return render_template('dictionary.html', dictionary=lex_data.get('words', []))
