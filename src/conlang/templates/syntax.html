@@ -363,38 +363,7 @@
 
     window.clearAllSettings = () => {
         if (confirm("確定清空當前所有填寫的內容與開關？（保留語法結構）")) {
-            const form = document.getElementById('syntax-form');
-            
-            // 1. 清空所有文字輸入 (Tags, Textareas)
-            form.querySelectorAll('input[type="text"]').forEach(input => {
-                input.value = '';
-                // 如果有 TagManager 的寬度邏輯，重置它
-                if (TagManager && TagManager.updateWidth) TagManager.updateWidth(input);
-            });
-
-            // 2. 取消所有 Checkbox 勾選
-            form.querySelectorAll('input[type="checkbox"]').forEach(input => {
-                input.checked = false;
-            });
-
-            // 3. 重置 Radio (通常回到第一個或是全部取消)
-            form.querySelectorAll('input[type="radio"]').forEach(input => {
-                input.checked = false;
-            });
-
-            // 4. 清空自定義生成的 Tag 容器
-            document.querySelectorAll('.custom-pill-tag').forEach(tag => tag.remove());
-
-            // 5. 強制執行同步，讓畫面上的依賴區域（dependent-section）隱藏
-            SyntaxApp.syncState();
-
-            // 6. 保持 action_type 為 'save'，然後存檔
-            document.getElementById('action-type').value = 'save';
-            
-            // 選擇性：你可以讓使用者手動點擊「儲存」，或是自動幫他送出
-            // form.submit(); 
-            
-            alert("已清空所有填寫欄位，請記得點擊儲存以套用變更。");
+            alert("功能暫時不可用");
         }
     };
 
