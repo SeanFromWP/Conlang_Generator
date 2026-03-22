@@ -24,8 +24,7 @@ def get_project_dir(project_name):
     """確保專案存在於使用者的獨立路徑：projects/{user_id}/{project_name}"""
     uid = get_user_id()
     name = secure_filename(project_name.strip()) if project_name else '_default_'
-    
-    # 建立 user_id 層級的資料夾
+
     user_path = os.path.join(PROJECTS_ROOT, uid)
     path = os.path.join(user_path, name)
     

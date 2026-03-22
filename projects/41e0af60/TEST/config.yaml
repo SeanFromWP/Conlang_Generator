@@ -1,58 +1,41 @@
 phonology: {}
 morphology:
-  sec_noun_syntax:
-    selected_matrix_dims:
-    - univ|feat_case
-    - univ|feat_gender
-    - univ|feat_number
   sec_verb_syntax:
     selected_matrix_dims:
-    - univ|feat_case
-    - univ|feat_gender
-    - univ|feat_number
-    - local|feat_conjugation
     - local|feat_tense
     - local|feat_mood
     - local|feat_aspect
     - local|feat_voice
-    - local|feat_person
-  sec_adj_syntax:
-    selected_matrix_dims:
-    - univ|feat_case
-    - univ|feat_gender
-    - univ|feat_number
+    - local|feat_negation
 sec_morphology_type:
   settings:
     opt_morphology:
     - type_analytic
     opt_synthetic_type:
-    - type_polysynthetic
+    - type_fusional
     opt_word_order:
     - SVO
+    opt_adposition_order:
+    - inposition
 sec_universal_features:
   bools:
     feat_case: true
     feat_gender: true
-    feat_number: true
   settings:
     feat_case:
     - case_nominative
     - case_accusative
-    - case_elative
-    - case_illative
-    - case_adessive
+    - case_locative
+    - case_genitive
+    - case_dative
     feat_gender:
-    - gen_neutral
     - gen_masculine
     - gen_feminine
-    feat_number:
-    - num_singular
-    - num_dual
     feat_person:
     - per_1st
     - per_1st_inc
+    - per_1st_exc
     - per_2nd
-    - per_2nd_pol
     - per_3rd
 sec_noun_syntax:
   bools:
@@ -68,24 +51,25 @@ sec_verb_syntax:
     feat_mood: true
     feat_aspect: true
     feat_voice: true
-    feat_person: true
-    feat_number: true
-    feat_gender: true
+    feat_negation: true
   settings:
     feat_tense:
     - tense_present
     - tense_past
     - tense_future
     feat_aspect:
-    - aspect_perfective
-    - aspect_imperfective
+    - aspect_perf
+    - aspect_imperf
     feat_mood:
-    - mood_indicative
-    - mood_imperative
-    - mood_subjunctive
+    - mood_ind
+    - mood_imp
+    - mood_subj
     feat_voice:
-    - voice_active
-    - voice_passive
+    - voice_act
+    - voice_pass
+    - voice_mid
+    feat_negation_mark:
+    - neg_affix
 sec_adj_syntax:
   bools:
     feat_comparison: true
@@ -96,5 +80,3 @@ sec_adj_syntax:
     feat_comparison:
     - comp_positive
     - comp_comparative
-    - comp_superlative
-    - comp_equative

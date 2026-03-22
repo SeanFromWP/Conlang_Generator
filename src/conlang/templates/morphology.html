@@ -13,29 +13,31 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <style>
-        .matrix-wrapper { overflow-x: auto; margin-bottom: 30px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); }
-        .morph-matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .morph-matrix-table th, .morph-matrix-table td { padding: 12px; border: 1px solid var(--border); vertical-align: middle; }
-        .morph-matrix-table th { background: #f1f3f5; font-size: 0.85rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
-        .matrix-label-col { width: 140px; background: #fdfdfd; font-weight: 600; color: var(--text-main); text-align: center; border-right: 2px solid var(--border) !important; }
+        .morph-layout { display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start; }
+        .dim-config-card { position: sticky; top: 20px; background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); z-index: 10; }
+        .dim-group-label { font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f3f4; padding-bottom: 5px; }
+        .dim-checkbox-list { display: flex; flex-direction: column; gap: 10px; }
         
-        .word-cell-textarea {
-            width: 100%; min-height: 45px; padding: 10px; border: 1px solid transparent;
-            background: transparent; resize: vertical; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
-            text-align: center; transition: all 0.2s;
+        .matrix-wrapper { background: white; border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; margin-bottom: 40px; box-shadow: var(--shadow-sm); }
+        .morph-matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 650px; }
+        .morph-matrix-table th, .morph-matrix-table td { border: 1px solid #edf2f7; padding: 0; position: relative; }
+        .morph-matrix-table th { background: #f8f9fa; padding: 14px; font-size: 0.85rem; color: var(--primary); font-weight: 700; text-align: center; }
+        
+        .matrix-label-col { width: 150px; background: #fcfcfc; font-weight: 600; text-align: center; border-right: 2px solid var(--border) !important; padding: 14px !important; }
+        
+        .word-cell-textarea { 
+            width: 100%; height: 70px; padding: 12px; border: none; background: transparent; 
+            resize: none; font-family: 'JetBrains Mono', monospace; font-size: 1rem; 
+            text-align: center; transition: all 0.2s; display: block; overflow-y: hidden;
         }
-        .word-cell-textarea:focus { border-color: var(--primary); background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1); }
-        
-        .matrix-group-title { margin: 25px 0 10px; font-weight: 700; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-        .matrix-group-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--primary); border-radius: 2px; }
+        .word-cell-textarea:hover { background: rgba(var(--primary-rgb), 0.04); }
+        .word-cell-textarea:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 3px var(--primary); z-index: 5; position: relative; }
 
-        .tabs { border-bottom: 2px solid var(--border); margin-bottom: 30px; display: flex; gap: 10px; }
-        .tab-btn { padding: 12px 24px; border: none; background: none; cursor: pointer; opacity: 0.5; font-weight: 600; transition: all 0.3s; border-bottom: 3px solid transparent; }
-        .tab-btn.active { opacity: 1; border-bottom-color: var(--primary); color: var(--primary); }
+        .matrix-group-title { margin: 35px 0 15px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 12px; font-size: 1.1rem; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 {% endblock %}
 
@@ -52,44 +54,51 @@
 <form id="morph-form" method="POST">
     {% for sec_name, sec_data in config.items() if sec_name in nav_sections %}
     <div id="panel-{{ sec_name }}" class="tab-content">
-        <div class="sort-section-card">
-            <div class="sort-section-title">
-                <span><i class="fas fa-layer-group"></i> <span data-i18n="label_setup_chart"></span></span>
-            </div>
-            <div class="tag-container">
-                {% set saved_dims = config.get('morphology', {}).get(sec_name, {}).get('selected_matrix_dims', []) %}
-                {% set univ_bools = config.get('sec_universal_features', {}).get('bools') or {} %}
+        <div class="morph-layout">
+            <aside class="dim-config-card">
+                <div style="font-size: 1.1rem; font-weight:800; margin-bottom:10px; color:var(--text-main);">
+                    <i class="fas fa-layer-group"></i> <span data-i18n="label_setup_chart">矩陣結構配置</span>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:20px;">請勾選維度以動態生成形態對應表</p>
 
-                {# 1. Universal 維度 #}
-                {% for feat_id, is_on in univ_bools.items() if is_on %}
-                    {% if feat_id != 'feat_alignment' %}
+                <div class="dim-group-label">Universal Features</div>
+                <div class="dim-checkbox-list">
+                    {% set univ_bools = config.get('sec_universal_features', {}).get('bools') or {} %}
+                    {% for feat_id, is_on in univ_bools.items() if is_on %}
+                        {% if feat_id != 'feat_alignment' %}
                         {% set val = "univ|" + feat_id %}
-                        <label class="glass-pill">
+                        <label class="glass-pill" style="justify-content: flex-start; width: 100%; cursor: pointer; padding: 10px 15px;">
                             <input type="checkbox" name="dims|{{ sec_name }}[]" class="matrix-dim" value="{{ val }}" 
-                                {% if val in saved_dims %}checked{% endif %} 
+                                {% if val in config.get('morphology', {}).get(sec_name, {}).get('selected_matrix_dims', []) %}checked{% endif %} 
                                 onchange="generateMatrix('{{ sec_name }}')">
-                            <span style="margin-right:4px; font-weight:800; color:var(--primary);">[U]</span> 
+                            <small style="color:var(--primary); font-weight:900; margin-right:8px;">[U]</small>
                             <span data-i18n="{{ feat_id }}"></span>
                         </label>
-                    {% endif %}
-                {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
 
-                {# 2. 本地維度 #}
-                {% set local_bools = config.get(sec_name, {}).get('bools') or {} %}
-                {% for feat_id, is_on in local_bools.items() if is_on %}
-                    {% if feat_id not in univ_bools %}
+                <div class="dim-group-label">Local Features</div>
+                <div class="dim-checkbox-list">
+                    {% set local_bools = config.get(sec_name, {}).get('bools') or {} %}
+                    {% for feat_id, is_on in local_bools.items() if is_on %}
+                        {% if feat_id not in univ_bools %}
                         {% set val = "local|" + feat_id %}
-                        <label class="glass-pill">
+                        <label class="glass-pill" style="justify-content: flex-start; width: 100%; cursor: pointer; padding: 10px 15px;">
                             <input type="checkbox" name="dims|{{ sec_name }}[]" class="matrix-dim" value="{{ val }}" 
-                                {% if val in saved_dims %}checked{% endif %} 
+                                {% if val in config.get('morphology', {}).get(sec_name, {}).get('selected_matrix_dims', []) %}checked{% endif %} 
                                 onchange="generateMatrix('{{ sec_name }}')">
                             <span data-i18n="{{ feat_id }}"></span>
                         </label>
-                    {% endif %}
-                {% endfor %}
-            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <main class="matrix-main-area">
+                <div id="matrix-container-{{ sec_name }}"></div>
+            </main>
         </div>
-        <div id="matrix-container-{{ sec_name }}"></div>
     </div>
     {% endfor %}
 </form>
@@ -105,116 +114,122 @@
     }
 
     function i18nSpan(key) {
-        return `<span data-i18n="${key}">${key}</span>`;
+        const translated = (window.t && typeof window.t === 'function') ? window.t(key) : key;
+        return `<span data-i18n="${key}">${translated}</span>`;
+    }
+
+    function handleMatrixNav(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const currentTd = e.target.closest('td');
+            const currentTr = e.target.closest('tr');
+            const colIndex = Array.from(currentTr.cells).indexOf(currentTd);
+            const nextTr = currentTr.nextElementSibling;
+            if (nextTr && nextTr.cells[colIndex]) {
+                nextTr.cells[colIndex].querySelector('textarea')?.focus();
+            }
+        }
     }
 
     function getOptionsFromConfig(sourceKey, featId) {
-        // 1. 如果是 Noun Syntax 的格位，抓取完整的 Class Groups
-        if (featId === 'feat_case') {
-            const caseSchema = FULL_CONFIG['sec_noun_syntax']?.settings?.['feat_case'];
-            if (caseSchema?.groups) {
-                // 如果在語法頁面有選中子集，優先用選中的
-                const activeSec = document.querySelector('.tab-btn.active').dataset.sec;
-                const selected = FULL_CONFIG[activeSec]?.settings?.['feat_case'];
-                if (Array.isArray(selected) && selected.length > 0) return selected;
-                // 否則回傳全部
-                return Object.values(caseSchema.groups).flat();
-            }
+        const root = FULL_CONFIG[sourceKey] || FULL_CONFIG['sec_universal_features'];
+        if (!root) return [];
+        if (featId === 'feat_case' && root.settings?.feat_case?.groups) {
+            return Object.values(root.settings.feat_case.groups).flat();
         }
-
-        // 2. 如果 Universal 定義池有這個屬性（性、數、人稱），直接抓取其定義的選項
-        const univSchema = FULL_CONFIG['sec_universal_features']?.settings?.[featId];
-        if (univSchema) {
-            if (univSchema.options) return univSchema.options;
-            if (Array.isArray(univSchema)) return univSchema;
+        const target = root.settings?.[featId] || root[featId];
+        if (target) {
+            if (target.options) return target.options;
+            if (Array.isArray(target)) return target;
         }
-
-        // 3. 處理本地定義的 TAM 或是其他屬性
-        const localSchema = FULL_CONFIG[sourceKey]?.settings?.[featId];
-        if (localSchema) {
-            if (localSchema.options) return localSchema.options;
-            if (Array.isArray(localSchema)) return localSchema;
-        }
-
         return [];
     }
 
     function generateMatrix(secName) {
         const container = document.getElementById(`matrix-container-${secName}`);
-        const selectedDoms = Array.from(document.querySelectorAll(`#panel-${secName} .matrix-dim:checked`));
+        if (!container) return;
 
-        // 過濾掉邏輯開關類型的維度
+        const checkedBoxes = Array.from(document.querySelectorAll(`#panel-${secName} .matrix-dim:checked`));
         const blacklist = ['feat_alignment', 'feat_conjugation', 'feat_agreement', 'feat_negation'];
 
-        if (selectedDoms.length === 0) {
-            container.innerHTML = `<div style="padding:60px; text-align:center; color:var(--text-sub); border:2px dashed var(--border); border-radius:12px; margin-top:20px;"><p data-i18n="morph_empty_msg">請選擇維度來生成形態矩陣</p></div>`;
+        if (checkedBoxes.length === 0) {
+            container.innerHTML = `<div style="padding:100px 20px; text-align:center; color:var(--text-sub); border:3px dashed #eee; border-radius:24px;">
+                <i class="fas fa-th-large fa-4x" style="margin-bottom:25px; opacity:0.1;"></i>
+                <h3 data-i18n="morph_empty_title">尚未選擇維度</h3></div>`;
+            if (window.applyTranslations) window.applyTranslations();
             return;
         }
 
-        const dims = selectedDoms
-            .filter(dom => !blacklist.includes(dom.value.split('|')[1]))
-            .map(dom => {
-                const [type, featId] = dom.value.split('|');
+        const dims = checkedBoxes
+            .filter(box => !blacklist.includes(box.value.split('|')[1]))
+            .map(box => {
+                const [type, featId] = box.value.split('|');
                 const sourceKey = (type === 'univ') ? 'sec_universal_features' : secName;
                 return { id: featId, items: getOptionsFromConfig(sourceKey, featId) };
-            });
-
-        const validDims = dims.filter(d => d.items.length > 0);
-        if (validDims.length === 0) {
-            container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--primary);">所選維度未在語法設定中啟用任何具體項目</div>`;
-            return;
-        }
+            })
+            .filter(d => d.items.length > 0);
 
         const existingMarkers = FULL_CONFIG.morphology?.[secName]?.markers || {};
-        if (validDims.length === 1) renderList(container, secName, validDims[0], existingMarkers);
-        else renderTable(container, secName, validDims, existingMarkers);
+        
+        if (dims.length === 1) renderList(container, secName, dims[0], existingMarkers);
+        else renderTable(container, secName, dims, existingMarkers);
 
-        if (window.applyTranslations) window.applyTranslations();
+        if (window.applyTranslations) setTimeout(() => { window.applyTranslations(); }, 50);
     }
 
     function renderList(container, secName, dim, existing) {
-        let html = `<div class="matrix-wrapper"><table class="morph-matrix-table"><tbody>`;
+        let html = `<div class="matrix-wrapper"><table class="morph-matrix-table">
+            <thead><tr><th style="width:150px;">${i18nSpan(dim.id)}</th><th>詞綴 / 變化</th></tr></thead><tbody>`;
         dim.items.forEach(item => {
-            const key = item.value || item;
-            const saved = (existing[key] && existing[key][0]) || {marker:''};
-            html += `<tr><td class="matrix-label-col">${i18nSpan(key)}</td><td><textarea name="matrix|${secName}|${key}|content[]" class="word-cell-textarea">${saved.marker || ''}</textarea></td></tr>`;
+            const val = item.value || item;
+            // 重要：確保抓取 marker 屬性
+            const saved = (existing[val] && existing[val][0]) ? existing[val][0].marker : '';
+            html += `<tr><td class="matrix-label-col">${i18nSpan(val)}</td>
+                <td><textarea name="matrix|${secName}|${val}|content[]" class="word-cell-textarea" onkeydown="handleMatrixNav(event)">${saved}</textarea></td></tr>`;
         });
         container.innerHTML = html + `</tbody></table></div>`;
     }
 
     function renderTable(container, secName, dims, existing) {
         const yDim = dims[0], xDim = dims[1], extraDims = dims.slice(2);
-        let extraCombos = [[]];
+        let combos = [[]];
         if (extraDims.length > 0) {
-            const cart = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
-            extraCombos = extraDims.map(d => d.items.map(i => i.value || i)).reduce((a, b) => cart(a, b));
-            if (!Array.isArray(extraCombos[0])) extraCombos = extraCombos.map(i => [i]);
+            const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+            combos = extraDims.map(d => d.items.map(i => i.value || i)).reduce((a, b) => cartesian(a, b));
+            if (!Array.isArray(combos[0])) combos = combos.map(i => [i]);
         }
-        let html = '';
-        extraCombos.forEach(extra => {
-            if (extra.length > 0) html += `<div class="matrix-group-title">${extra.map(e => i18nSpan(e)).join(' + ')}</div>`;
-            html += `<div class="matrix-wrapper"><table class="morph-matrix-table"><thead><tr><th style="background:#e9ecef;">${i18nSpan(yDim.id)} ↓ / ${i18nSpan(xDim.id)} →</th>`;
-            xDim.items.forEach(x => html += `<th>${i18nSpan(x.value || x)}</th>`);
-            html += `</tr></thead><tbody>`;
+
+        let fullHtml = '';
+        combos.forEach(extra => {
+            if (extra.length > 0) {
+                const title = extra.map(e => i18nSpan(e)).join(' + ');
+                fullHtml += `<div class="matrix-group-title"><i class="fas fa-layer-group"></i> ${title}</div>`;
+            }
+            let tableHtml = `<div class="matrix-wrapper"><table class="morph-matrix-table"><thead><tr>
+                <th style="width:150px; background:#f1f3f5;">${i18nSpan(yDim.id)} / ${i18nSpan(xDim.id)}</th>`;
+            xDim.items.forEach(x => tableHtml += `<th>${i18nSpan(x.value || x)}</th>`);
+            tableHtml += `</tr></thead><tbody>`;
+
             yDim.items.forEach(y => {
                 const yVal = y.value || y;
-                html += `<tr><td class="matrix-label-col">${i18nSpan(yVal)}</td>`;
+                tableHtml += `<tr><td class="matrix-label-col">${i18nSpan(yVal)}</td>`;
                 xDim.items.forEach(x => {
                     const xVal = x.value || x;
                     const key = [yVal, xVal, ...extra].join('+');
-                    const saved = (existing[key] && existing[key][0]) || {marker:''};
-                    html += `<td><textarea name="matrix|${secName}|${key}|content[]" class="word-cell-textarea">${saved.marker || ''}</textarea></td>`;
+                    // 重要：從 existing 獲取正確的數據，並確保 textarea name 格式與後端對齊
+                    const saved = (existing[key] && existing[key][0]) ? existing[key][0].marker : '';
+                    tableHtml += `<td><textarea name="matrix|${secName}|${key}|content[]" class="word-cell-textarea" onkeydown="handleMatrixNav(event)">${saved}</textarea></td>`;
                 });
-                html += `</tr>`;
+                tableHtml += `</tr>`;
             });
-            html += `</tbody></table></div>`;
+            fullHtml += tableHtml + `</tbody></table></div>`;
         });
-        container.innerHTML = html;
+        container.innerHTML = fullHtml;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         const lastTab = localStorage.getItem('morph_last_tab') || 'sec_noun_syntax';
-        switchMainTab(lastTab);
+        setTimeout(() => switchMainTab(lastTab), 100);
     });
 </script>
 {% endblock %}
