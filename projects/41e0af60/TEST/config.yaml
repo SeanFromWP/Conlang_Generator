@@ -1,82 +1,80 @@
-phonology: {}
-morphology:
-  sec_verb_syntax:
-    selected_matrix_dims:
-    - local|feat_tense
-    - local|feat_mood
-    - local|feat_aspect
-    - local|feat_voice
-    - local|feat_negation
-sec_morphology_type:
-  settings:
-    opt_morphology:
-    - type_analytic
-    opt_synthetic_type:
-    - type_fusional
-    opt_word_order:
-    - SVO
-    opt_adposition_order:
-    - inposition
-sec_universal_features:
-  bools:
-    feat_case: true
-    feat_gender: true
-  settings:
-    feat_case:
-    - case_nominative
-    - case_accusative
-    - case_locative
-    - case_genitive
-    - case_dative
-    feat_gender:
-    - gen_masculine
-    - gen_feminine
-    feat_person:
-    - per_1st
-    - per_1st_inc
-    - per_1st_exc
-    - per_2nd
-    - per_3rd
-sec_noun_syntax:
-  bools:
-    feat_case: true
-    feat_number: true
-    feat_gender: true
-    feat_person: true
-    feat_definiteness: true
-    feat_possession: true
-sec_verb_syntax:
-  bools:
-    feat_tense: true
-    feat_mood: true
-    feat_aspect: true
-    feat_voice: true
-    feat_negation: true
-  settings:
-    feat_tense:
-    - tense_present
-    - tense_past
-    - tense_future
-    feat_aspect:
-    - aspect_perf
-    - aspect_imperf
-    feat_mood:
-    - mood_ind
-    - mood_imp
-    - mood_subj
-    feat_voice:
-    - voice_act
-    - voice_pass
-    - voice_mid
-    feat_negation_mark:
-    - neg_affix
-sec_adj_syntax:
-  bools:
-    feat_comparison: true
-    feat_case: true
-    feat_number: true
-    feat_gender: true
-  settings:
-    feat_comparison:
-    - comp_positive
-    - comp_comparative
+phonology:
+  inventory_consonants:
+  - p
+  - b
+  - t
+  - d
+  - c
+  - m
+  - n
+  - r
+  - s
+  - z
+  inventory_vowels:
+  - i
+  - y
+  - u
+  - o
+  - ə
+  - ɛ
+  - ʌ
+  - ɔ
+  - a
+  inventory:
+  - p
+  - b
+  - t
+  - d
+  - c
+  - m
+  - n
+  - r
+  - s
+  - z
+  - i
+  - y
+  - u
+  - o
+  - ə
+  - ɛ
+  - ʌ
+  - ɔ
+  - a
+  categories:
+    P:
+      symbols:
+      - p
+      - b
+      - t
+      - d
+      - c
+      comment: Plosives
+    N:
+      symbols:
+      - m
+      - n
+      comment: Nasals
+    F:
+      symbols:
+      - s
+      - z
+      comment: Fricatives
+    L:
+      symbols:
+      - r
+      comment: Liquids/Approximants
+    K:
+      symbols:
+      - t
+      - d
+      - n
+      - r
+      - s
+      - z
+      comment: Coronals
+    B:
+      symbols:
+      - p
+      - b
+      - m
+      comment: Labials
