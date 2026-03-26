@@ -78,3 +78,9 @@ phonology:
       - b
       - m
       comment: Labials
+sec_morphology_type:
+  settings:
+    opt_morphology:
+    - type_analytic
+    opt_synthetic_type:
+    - type_fusional

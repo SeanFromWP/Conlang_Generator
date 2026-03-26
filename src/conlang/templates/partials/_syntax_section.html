@@ -45,94 +45,68 @@
         </div>
     {% endfor %}
 
-    {# --- 3. 細項設定 (Settings: 包含 Groups 與自定義標籤) --- #}
+    {# --- 3. 細項設定 (Settings) --- #}
     {% if content.settings %}
         {% for subfeat_key, info in content.settings.items() %}
-            {# 只有當對應的 bool 開關打開時，此區域才會顯示 (由 JS 控制) #}
-            <div class="dependent-section" id="dep-{{ section }}-{{ subfeat_key }}" 
-                 style="display: {% if config[section] and config[section]['bools'] and config[section]['bools'][subfeat_key] %}block{% else %}none{% endif %};">
-                
-                <div class="label-caps" style="color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 5px; margin-bottom: 15px;" data-i18n="{{subfeat_key}}"></div>
+            {# 核心修正：只處理真正的功能項，跳過配置用的 metadata #}
+            {% if subfeat_key not in ['type', 'options'] %}
+                <div class="dependent-section" id="dep-{{ section }}-{{ subfeat_key }}" 
+                    style="display: {% if config[section] and config[section]['bools'] and config[section]['bools'][subfeat_key] %}block{% else %}none{% endif %}; margin-bottom: 25px;">
+                    
+                    <div class="label-caps" style="color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 5px; margin-bottom: 15px;" data-i18n="{{subfeat_key}}"></div>
 
-                {# --- A: 處理帶分組的選項 (如 Case 的 6 大分組) --- #}
-                {% if info.groups %}
-                    {% for group_key, group_options in info.groups.items() %}
-                        <div class="group-header" style="margin: 15px 0 8px 0;">
-                            <span data-i18n="{{group_key}}" style="font-weight: 700; font-size: 0.8rem; color: var(--text-sub); text-transform: uppercase;"></span>
-                        </div>
-                        <div class="tag-container" style="margin-bottom: 15px;">
-                            {% for opt in group_options %}
-                                {% set is_dict = opt is mapping %}
-                                {% set opt_val = opt.value if is_dict else opt %}
-                                {% set opt_impact = opt.impact | join(',') if (is_dict and opt.impact) else "" %}
-                                
+                    {# 將所有標籤與新增按鈕全部放在同一個 Flex 容器內 #}
+                    <div id="options-container-{{ section }}-{{ subfeat_key }}" class="tag-container" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                        
+                        {# --- A: 預設選項 (Groups 或 Options) --- #}
+                        {% if info.groups %}
+                            {% for group_key, group_options in info.groups.items() %}
+                                {% for opt in group_options %}
+                                    {% set opt_val = opt.value if opt is mapping else opt %}
+                                    <label class="glass-pill">
+                                        <input type="checkbox" name="settings|{{ section }}|{{ subfeat_key }}" value="{{ opt_val }}"
+                                            {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and opt_val in config[section]['settings'][subfeat_key] %}checked{% endif %}>
+                                        <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
+                                    </label>
+                                {% endfor %}
+                            {% endfor %}
+                        {% elif info.options %}
+                            {% for opt in info.options %}
+                                {% set opt_val = opt.value if opt is mapping else opt %}
                                 <label class="glass-pill">
-                                    <input type="checkbox" name="settings|{{ section }}|{{ subfeat_key }}" 
-                                           value="{{ opt_val }}"
-                                           data-section="{{ section }}" data-subfeat="{{ subfeat_key }}"
-                                           {% if opt_impact %} data-impacts="{{ opt_impact }}" {% endif %}
-                                           {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and opt_val in config[section]['settings'][subfeat_key] %}checked{% endif %}>
+                                    <input type="{{ 'radio' if info.type == 'single' else 'checkbox' }}" 
+                                        name="settings|{{ section }}|{{ subfeat_key }}" value="{{ opt_val }}"
+                                        {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and (opt_val in config[section]['settings'][subfeat_key] if config[section]['settings'][subfeat_key] is iterable else opt_val == config[section]['settings'][subfeat_key]) %}checked{% endif %}>
                                     <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
                                 </label>
                             {% endfor %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    {# --- B: 一般無分組選項 (如 TAM 選項) --- #}
-                    <div class="tag-container" style="margin-bottom: 15px;">
-                        {% for opt in info.options %}
-                            {% set is_dict = opt is mapping %}
-                            {% set opt_val = opt.value if is_dict else opt %}
-                            {% set opt_impact = opt.impact | join(',') if (is_dict and opt.impact) else "" %}
+                        {% endif %}
 
-                            <label class="glass-pill">
-                                <input type="{{ 'radio' if info.type == 'single' else 'checkbox' }}" 
-                                       name="settings|{{ section }}|{{ subfeat_key }}" 
-                                       value="{{ opt_val }}"
-                                       {% if opt_impact %} data-impacts="{{ opt_impact }}" {% endif %}
-                                       {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and (opt_val in config[section]['settings'][subfeat_key] if config[section]['settings'][subfeat_key] is iterable else opt_val == config[section]['settings'][subfeat_key]) %}checked{% endif %}>
-                                <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
-                            </label>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                {# --- 自定義標籤區 (Custom Addition Zone) --- #}
-                <div class="custom-addition-zone" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
-                    <div id="options-container-{{ section }}-{{ subfeat_key }}" class="tag-container">
-                        
-                        {# 過濾並顯示已保存的自定義標籤 (不在 master.yaml 預設值中的) #}
+                        {# --- B: 已保存的自定義標籤 (也在同一排) --- #}
                         {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] %}
                             {% set defaults = [] %}
-                            {% if info.options %}
-                                {% for o in info.options %}{% set _ = defaults.append(o.value if o is mapping else o) %}{% endfor %}
-                            {% endif %}
-                            {% if info.groups %}
-                                {% for gk, go in info.groups.items() %}
-                                    {% for o in go %}{% set _ = defaults.append(o.value if o is mapping else o) %}{% endfor %}
-                                {% endfor %}
-                            {% endif %}
+                            {% if info.options %}{% for o in info.options %}{% set _ = defaults.append(o.value if o is mapping else o) %}{% endfor %}{% endif %}
+                            {% if info.groups %}{% for gk, go in info.groups.items() %}{% for o in go %}{% set _ = defaults.append(o.value if o is mapping else o) %}{% endfor %}{% endfor %}{% endif %}
 
                             {% for saved_val in config[section]['settings'][subfeat_key] %}
                                 {% if saved_val not in defaults %}
-                                <div class="glass-pill custom-pill-tag">
-                                    <input type="text" name="settings|{{ section }}|{{ subfeat_key }}" 
-                                           value="{{ saved_val }}" autocomplete="off" 
-                                           oninput="TagManager.updateWidth(this)"
-                                           style="width: {{ (saved_val|length * 12) + 20 }}px;">
-                                    <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove()">×</button>
+                                <div class="glass-pill custom-pill-tag" style="display: flex; align-items: center;">
+                                    <input type="text" name="settings|{{ section }}|{{ subfeat_key }}" value="{{ saved_val }}" 
+                                        oninput="TagManager.updateWidth(this)" style="width: {{ (saved_val|length + 2) }}ch;">
+                                    <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove(); SyntaxApp.syncState();">×</button>
                                 </div>
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
 
-                        <button type="button" class="btn-tag-add" 
-                                onclick="TagManager.add('{{ section }}', '{{ subfeat_key }}')">
+                        {# --- C: 新增按鈕 (也在同一排) --- #}
+                        <button type="button" class="btn-tag-add" onclick="TagManager.add('{{ section }}', '{{ subfeat_key }}')" 
+                                style="border: 1px dashed var(--primary); background: transparent; color: var(--primary); padding: 5px 15px; border-radius: 20px; cursor: pointer;">
                             + <span data-i18n="btn_add_custom"></span>
                         </button>
                     </div>
                 </div>
-            </div>
+            {% endif %}
         {% endfor %}
     {% endif %}
 </div>
