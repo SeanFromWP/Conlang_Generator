@@ -1,0 +1,254 @@
+{% extends "layout.html" %}
+{% from "macros.html" import session_guard, end_guard %}
+
+{% block page_name %}
+    <span data-i18n="nav_agglutinative_morph">黏著語管理</span>
+{% endblock %}
+
+{% block actions %}
+    <button type="submit" form="agglut-form" class="btn btn-save">
+        <i class="fas fa-save"></i> <span data-i18n="btn_save_config"></span>
+    </button>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        .syntax-layout { display: grid; grid-template-columns: 260px 1fr; gap: 30px; margin-top: 20px; height: calc(100vh - 200px); min-height: 500px; }
+        .syntax-sidebar { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 12px; border-right: 1px solid rgba(var(--text-rgb), 0.1); }
+        .side-tab-btn { padding: 14px 18px; text-align: left; border: none; background: rgba(var(--text-rgb), 0.02); border-radius: 12px; cursor: pointer; transition: all 0.2s; color: var(--text-sub); font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+        .side-tab-btn.active { background: var(--primary); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3); }
+        .syntax-main-content { overflow-y: auto; padding-right: 20px; padding-bottom: 80px; scroll-behavior: smooth; }
+        
+        /* Ordering 拖拽區 */
+        .order-pool { min-height: 100px; display: flex; flex-direction: column; gap: 10px; padding: 20px; background: rgba(var(--text-rgb), 0.03); border: 2px dashed rgba(var(--text-rgb), 0.1); border-radius: 16px; margin-bottom: 20px; }
+        .slot-pill { padding: 14px 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; cursor: grab; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm); user-select: none; }
+        .slot-pill:active { cursor: grabbing; }
+        .slot-pill.stem { border: 2px solid var(--primary); background: rgba(var(--primary-rgb), 0.05); }
+        .slot-ghost { opacity: 0.4; background: var(--secondary); }
+
+        /* 卡片與輸入框 */
+        .slot-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+        .affix-row { border-bottom: 1px solid rgba(var(--text-rgb), 0.05); padding: 15px 0; }
+        .rule-item { background: rgba(var(--primary-rgb), 0.03); border-left: 3px solid var(--secondary); padding: 12px; border-radius: 0 8px 8px 0; display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .input-mini { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--card-bg); color: var(--text-main); }
+        
+        .section-view { display: none; }
+        .section-view.active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+{% endblock %}
+
+{% block content %}
+{{ session_guard() }}
+
+<div class="tabs">
+    <button type="button" class="tab-btn active" data-tab="ordering" onclick="switchMainTab('ordering')">
+        <span data-i18n="label_morph_ordering">排列順序</span>
+    </button>
+    <button type="button" class="tab-btn" data-tab="affixes" onclick="switchMainTab('affixes')">
+        <span data-i18n="label_morph_affixes">詞綴設定</span>
+    </button>
+</div>
+
+<form id="agglut-form" method="POST">
+    <div class="syntax-layout">
+        <aside class="syntax-sidebar">
+            {% for sec in ['sec_noun_syntax', 'sec_verb_syntax', 'sec_adj_syntax'] %}
+            <button type="button" class="side-tab-btn" data-section="{{ sec }}" onclick="handleSideTabClick('{{ sec }}')">
+                <span data-i18n="{{ sec }}"></span>
+            </button>
+            {% endfor %}
+        </aside>
+
+        <main class="syntax-main-content">
+            {% for sec in ['sec_noun_syntax', 'sec_verb_syntax', 'sec_adj_syntax'] %}
+            <div id="view-{{ sec }}" class="section-view">
+                
+                <div class="tab-pane-content" data-pane="ordering">
+                    <div class="slot-card">
+                        <div class="label-caps" style="margin-bottom:12px;" data-i18n="label_morph_ordering"></div>
+                        <p class="text-sub" style="margin-bottom:20px; font-size: 0.85rem;" data-i18n="hint_stem_position"></p>
+                        
+                        <div id="order-pool-{{ sec }}" class="order-pool"></div>
+                        
+                        <input type="hidden" name="ordering|{{ sec }}" id="input-order-{{ sec }}">
+                    </div>
+                </div>
+
+                <div class="tab-pane-content" data-pane="affixes" style="display: none;">
+                    <div id="affix-container-{{ sec }}"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </main>
+    </div>
+</form>
+
+<script>
+    // 預載配置
+    const FULL_CONFIG = {{ config | tojson }};
+    const SAVED_DATA = FULL_CONFIG.morphology?.agglutinative || {};
+    const SAVED_ORDER = FULL_CONFIG.morphology?.ordering || {};
+
+    // 主分頁切換
+    window.switchMainTab = (tabId) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+        document.querySelectorAll('.tab-pane-content').forEach(p => p.style.display = (p.dataset.pane === tabId) ? 'block' : 'none');
+    };
+
+    // 側邊欄切換
+    function handleSideTabClick(secId) {
+        localStorage.setItem('last_agglut_side_tab', secId);
+        document.querySelectorAll('.side-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === secId));
+        document.querySelectorAll('.section-view').forEach(view => view.classList.toggle('active', view.id === `view-${secId}`));
+        
+        renderOrdering(secId);
+        renderAffixDetails(secId);
+    }
+
+    /**
+     * 核心邏輯：預設產生順序並渲染
+     */
+    function renderOrdering(secId) {
+        const pool = document.getElementById(`order-pool-${secId}`);
+        const inputHidden = document.getElementById(`input-order-${secId}`);
+        if (!pool || !inputHidden) return;
+
+        // 1. 抓取當前範疇下「已啟用」的 Feature (bool 值為 true 的)
+        const activeFeats = Object.entries(FULL_CONFIG[secId]?.bools || {})
+            .filter(([_, on]) => on === true)
+            .map(([id]) => id);
+
+        // 2. 取得現有順序，如果完全沒存過，就預設生成 ['STEM', ...activeFeats]
+        let order = SAVED_ORDER[secId];
+        if (!order || !Array.isArray(order) || order.length === 0) {
+            order = ['STEM', ...activeFeats];
+        } else {
+            // 如果存過，過濾掉已經被關閉的特徵
+            order = order.filter(id => id === 'STEM' || activeFeats.includes(id));
+            // 檢查是否有新開啟但不在順序清單中的特徵，補在最後面
+            activeFeats.forEach(feat => {
+                if (!order.includes(feat)) order.push(feat);
+            });
+        }
+
+        // 3. 渲染 UI
+        pool.innerHTML = order.map(id => `
+            <div class="slot-pill ${id === 'STEM' ? 'stem' : ''}" data-id="${id}">
+                <i class="fas ${id === 'STEM' ? 'fa-dna' : 'fa-box-open'}"></i>
+                <strong data-i18n="${id === 'STEM' ? 'label_stem' : id}">
+                    ${id === 'STEM' ? '詞根' : id}
+                </strong>
+            </div>
+        `).join('');
+
+        // 4. 初始化拖拽
+        new Sortable(pool, { 
+            animation: 150, 
+            ghostClass: 'slot-ghost',
+            onEnd: () => syncOrder(secId)
+        });
+
+        // 5. 重要：初次渲染即執行一次同步，確保隱藏欄位有預設值可以提交
+        syncOrder(secId);
+        
+        if (window.applyTranslations) window.applyTranslations();
+    }
+
+    function syncOrder(secId) {
+        const pool = document.getElementById(`order-pool-${secId}`);
+        const inputHidden = document.getElementById(`input-order-${secId}`);
+        const currentItems = Array.from(pool.querySelectorAll('.slot-pill')).map(el => el.dataset.id);
+        inputHidden.value = JSON.stringify(currentItems);
+    }
+
+    /**
+     * 渲染詞綴詳情
+     */
+    function renderAffixDetails(secId) {
+        const container = document.getElementById(`affix-container-${secId}`);
+        const activeFeats = Object.entries(FULL_CONFIG[secId]?.bools || {})
+            .filter(([_, on]) => on === true).map(([id]) => id);
+
+        const placeholder = (window.t) ? window.t('placeholder_base_marker') : '...';
+
+        container.innerHTML = activeFeats.map(featId => {
+            const options = getOptionsFromConfig(secId, featId);
+            return `
+                <div class="slot-card">
+                    <div class="label-caps" style="color:var(--primary); margin-bottom:15px;" data-i18n="${featId}">${featId}</div>
+                    ${options.map(opt => renderAffixRow(secId, featId, opt, placeholder)).join('')}
+                </div>
+            `;
+        }).join('');
+        if (window.applyTranslations) window.applyTranslations();
+    }
+
+    function renderAffixRow(sec, feat, opt, placeholder) {
+        const key = opt.value || opt;
+        const saved = SAVED_DATA[sec]?.[feat]?.[key] || { base: '', rules: [] };
+        return `
+            <div class="affix-row">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="width:140px; font-weight:600;" data-i18n="${key}">${key}</span>
+                    <input type="text" name="agglut|${sec}|${feat}|${key}|base" class="input-mini" 
+                           style="flex:1" value="${saved.base}" placeholder="${placeholder}">
+                    <button type="button" class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;" 
+                            onclick="addRule('${sec}','${feat}','${key}')">
+                        <i class="fas fa-plus"></i> <span data-i18n="btn_add_rule"></span>
+                    </button>
+                </div>
+                <div id="rules-${sec}-${feat}-${key}">
+                    ${(saved.rules || []).map(r => createRuleHTML(sec, feat, key, r)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function createRuleHTML(sec, feat, opt, data = {cond: 'v_end', alt: ''}) {
+        const isCustom = !['v_end', 'c_end'].includes(data.cond);
+        return `
+            <div class="rule-item">
+                <span data-i18n="label_if" style="font-weight:bold; font-size:0.8rem;">IF</span>
+                <select class="input-mini" onchange="toggleRuleType(this)" style="width:auto;">
+                    <option value="v_end" ${data.cond === 'v_end'?'selected':''}>_V</option>
+                    <option value="c_end" ${data.cond === 'c_end'?'selected':''}>_C</option>
+                    <option value="custom" ${isCustom?'selected':''}>Custom</option>
+                </select>
+                <input type="text" name="agglut|${sec}|${feat}|${opt}|cond[]" class="input-mini cond-input" 
+                       style="width:100px; display:${isCustom?'block':'none'}" value="${data.cond}">
+                <span>→</span>
+                <input type="text" name="agglut|${sec}|${feat}|${opt}|alt[]" class="input-mini" style="width:120px;" value="${data.alt}">
+                <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="margin-left:auto; color:var(--danger);">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    function toggleRuleType(sel) {
+        const input = sel.parentElement.querySelector('.cond-input');
+        if (sel.value === 'custom') { input.style.display = 'block'; input.value = ''; }
+        else { input.style.display = 'none'; input.value = sel.value; }
+    }
+
+    function addRule(sec, feat, opt) {
+        document.getElementById(`rules-${sec}-${feat}-${opt}`).insertAdjacentHTML('beforeend', createRuleHTML(sec, feat, opt));
+        if (window.applyTranslations) window.applyTranslations();
+    }
+
+    function getOptionsFromConfig(secId, featId) {
+        let sets = FULL_CONFIG[secId]?.settings?.[featId] || FULL_CONFIG['sec_universal_features']?.settings?.[featId];
+        return Array.isArray(sets) ? sets : [];
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const lastTab = localStorage.getItem('last_agglut_side_tab') || 'sec_noun_syntax';
+        handleSideTabClick(lastTab);
+    });
+</script>
+
+{{ end_guard() }}
+{% endblock %}

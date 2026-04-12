@@ -1,6 +1,8 @@
 /* ==========================================================================
-   1. 佈局與層級 (Base Layout & Typography) 
+   # [H1] 全域佈局與文字核心系統 (GLOBAL LAYOUT & TYPOGRAPHY)
    ========================================================================== */
+
+/* ## [H2] 1.1 基礎文字定義 (Base Typography) */
 .label-caps {
     font-size: 0.75rem;
     letter-spacing: 0.5px;
@@ -11,6 +13,35 @@
     font-weight: 600;
 }
 
+.drag-hint {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.font-bold { font-weight: 700; }
+
+.phonetic { 
+    font-family: "Segoe UI", "Lucida Sans Unicode", sans-serif; 
+    color: var(--primary); 
+}
+
+.ipa-symbol-text {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #555;
+    font-family: "Segoe UI", serif;
+    letter-spacing: -0.5px;
+}
+
+.numeric-label {
+    font-family: monospace;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ## [H2] 1.2 佈局容器與框架 (Structural Layout) */
 .dependent-section { 
     transition: all 0.3s ease; 
     margin-bottom: 20px; 
@@ -44,16 +75,11 @@
     color: var(--text-main);
 }
 
-.drag-hint {
-    font-size: 0.75rem;
-    color: var(--text-sub);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
 /* ==========================================================================
-   2. 導航與分頁系統 (Tabs & Toggle Bar) 
+   # [H1] 導航與操控系統 (NAVIGATION & CONTROLS)
    ========================================================================== */
+
+/* ## [H2] 2.1 分頁與切換條 (Tabs & Toggle Bar) */
 .tabs {
     display: flex;
     gap: 10px;
@@ -87,9 +113,41 @@
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
+/* ## [H2] 2.2 全域按鈕與語言切換 (Action Buttons) */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 38px; padding: 0 20px; border-radius: 8px; border: 1px solid transparent;
+    font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+    font-size: 0.9rem; line-height: 1; white-space: nowrap;
+}
+
+.btn-primary { 
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
+    height: 40px; padding: 0 20px; border-radius: 8px; border: none;
+    background: var(--primary); color: white; font-weight: 600; cursor: pointer; transition: 0.2s;
+}
+
+.btn-save {
+    background: var(--primary); color: white;
+    box-shadow: 0 2px 6px rgba(26, 115, 232, 0.2); border-color: var(--primary);
+}
+.btn-save:hover { background: #1557b0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3); }
+
+.btn-outline { background: white; border: 1px solid var(--border); color: var(--text-sub); }
+.btn-outline:hover { background: #f1f3f4; border-color: var(--text-sub); color: var(--text-main); }
+
+.lang-switcher { display: inline-flex; background: #eee; padding: 3px; border-radius: 8px; margin-right: 15px; border: 1px solid var(--border); }
+.btn-lang {
+    padding: 6px 14px; border: none; cursor: pointer; border-radius: 6px;
+    font-weight: 600; transition: 0.2s; font-size: 0.75rem; background: transparent; color: var(--text-sub);
+}
+.btn-lang.active, .btn-lang:hover { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
 /* ==========================================================================
-   3. 核心 Pill 系統 (通用標籤風格)
+   # [H1] 核心標籤系統 (PILL & TAG SYSTEM)
    ========================================================================== */
+
+/* ## [H2] 3.1 標籤容器與基礎 Pill (Base Pill) */
 .tag-container {
     display: flex;
     flex-wrap: wrap;
@@ -116,6 +174,7 @@
     color: #555; 
 }
 
+/* ## [H2] 3.2 互動狀態與輸入 (Pill Interaction) */
 .glass-pill:hover, .tag-chip:hover, .custom-pill-tag:hover {
     border-color: #bbb;
     background: #f0f1f2;
@@ -148,8 +207,10 @@
 }
 
 /* ==========================================================================
-   4. IPA 專用按鈕 (獨立樣式：緊湊不寬)
+   # [H1] 專業數據與表格系統 (DATA TABLES & IPA)
    ========================================================================== */
+
+/* ## [H2] 4.1 IPA 語音專用按鈕 (IPA Symbols) */
 .table-ipa-item {
     display: inline-flex;
     align-items: center;
@@ -176,28 +237,12 @@
     color: var(--primary);
 }
 
-.ipa-symbol-text {
-    font-size: 1.1rem;
-    font-weight: 400;
-    color: #555;
-    font-family: "Segoe UI", serif;
-    letter-spacing: -0.5px;
-}
-
 .table-ipa-item:has(input:checked) .ipa-symbol-text {
     color: var(--primary);
     font-weight: 600;
 }
 
-.glass-pill input[type="checkbox"], 
-.glass-pill input[type="radio"],
-.table-ipa-item input[type="checkbox"] {
-    display: none;
-}
-
-/* ==========================================================================
-   5. 配置面板與表格佈局 (Config & Grid)
-   ========================================================================== */
+/* ## [H2] 4.2 配置面板與矩陣表格 (Grid & Table) */
 .config-panel {
     background: var(--bg-card, #fafafa);
     border: 1px solid var(--border);
@@ -230,164 +275,7 @@
 .ipa-zone, .weight-zone { display: none; }
 .ipa-zone.active, .weight-zone.active { display: block; }
 
-/* ==========================================================================
-   6. 管理工具與輔助 (Utilities)
-   ========================================================================== */
-.btn-tag-add {
-    background: none;
-    border: 1px dashed var(--primary);
-    color: var(--primary);
-    border-radius: 50px;
-    padding: 5px 15px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-}
-.btn-tag-add:hover { background: var(--primary-glass); }
-
-.btn-tag-remove {
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    font-size: 1.1rem;
-    margin-left: 6px;
-    display: flex;
-    align-items: center;
-    line-height: 1;
-}
-.btn-tag-remove:hover { color: #dc3545; }
-
-.sortable-chosen {
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    transform: scale(1.02);
-    z-index: 10;
-}
-
-/* ==========================================================================
-   7. 類別管理條目 (Category Management List)
-   ========================================================================== */
-.list-item-edit {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 15px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.list-item-edit:hover { border-color: var(--text-sub); }
-.list-item-edit.editing {
-    border-color: var(--primary);
-    background: var(--primary-glass);
-    box-shadow: 0 4px 12px var(--primary-glass);
-}
-
-.item-main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.input-group-inline { display: flex; align-items: center; gap: 10px; }
-
-.cat-code-input {
-    background: rgba(0,0,0,0.03);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-family: monospace;
-    font-weight: 700;
-    color: var(--primary);
-    width: 120px;
-}
-
-.cat-code-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #fff;
-}
-
-.cat-symbols-box {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    background: rgba(0,0,0,0.02);
-    padding: 10px;
-    border-radius: 8px;
-    min-height: 44px;
-    border: 1px inset rgba(0,0,0,0.03);
-}
-
-/* ==========================================================================
-   8. 權重區域卡片與滑桿 (Weight Management Cards)
-   ========================================================================== */
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 25px 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed var(--border);
-}
-
-.section-header h2 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0;
-}
-
-.weight-zone .grid-auto-layout {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 15px;
-}
-
-.weight-zone .interactive-pill {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 15px;
-    height: auto;
-    border-radius: 12px;
-}
-
-.weight-zone .ipa-symbol-text {
-    font-size: 1.4rem;
-    margin-bottom: 8px;
-}
-
-.slider-box { width: 100%; }
-.slider-box .label-caps {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 5px;
-}
-
-.numeric-label {
-    font-family: monospace;
-    font-weight: 700;
-    color: var(--primary);
-}
-
-.slider-box input[type="range"] {
-    width: 100%;
-    accent-color: var(--primary);
-    cursor: pointer;
-}
-
-.item-actions .delete {
-    background: none; border: none; cursor: pointer;
-    font-size: 1.2rem; padding: 8px; border-radius: 50%; transition: 0.2s;
-}
-.item-actions .delete:hover { background: rgba(220, 53, 69, 0.1); }
-
-/* ==========================================================================
-   9. 通用表格系統 (Dictionary & Data Tables)
-   ========================================================================== */
+/* ## [H2] 4.3 通用數據表 (Dictionary Tables) */
 .data-table-container {
     width: 100%;
     background: var(--bg-card, #ffffff);
@@ -426,16 +314,95 @@
 }
 
 /* ==========================================================================
-   10. 搜尋與工具列 (Search & Controls)
+   # [H1] 管理工具與細節功能 (ADMIN & UTILITIES)
    ========================================================================== */
-.page-controls {
-    display: flex;
-    justify-content: space-between;
+
+/* ## [H2] 5.1 管理操作與排序 (Actions) */
+.btn-tag-add {
+    background: none;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    border-radius: 50px;
+    padding: 5px 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 32px;
+    display: inline-flex;
     align-items: center;
-    margin-bottom: 24px;
-    gap: 16px;
+}
+.btn-tag-add:hover { background: var(--primary-glass); }
+
+.btn-tag-remove {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin-left: 6px;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+.btn-tag-remove:hover { color: #dc3545; }
+
+.sortable-chosen {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transform: scale(1.02);
+    z-index: 10;
 }
 
+/* ## [H2] 5.2 類別管理與權重 (Categories & Sliders) */
+.list-item-edit {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 15px;
+    transition: all 0.2s ease; cursor: pointer;
+}
+.list-item-edit:hover { border-color: var(--text-sub); }
+.list-item-edit.editing {
+    border-color: var(--primary); background: var(--primary-glass);
+    box-shadow: 0 4px 12px var(--primary-glass);
+}
+
+.item-main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.input-group-inline { display: flex; align-items: center; gap: 10px; }
+
+.cat-code-input {
+    background: rgba(0,0,0,0.03); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px; font-family: monospace;
+    font-weight: 700; color: var(--primary); width: 120px;
+}
+.cat-code-input:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+.cat-symbols-box {
+    display: flex; flex-wrap: wrap; gap: 6px; background: rgba(0,0,0,0.02);
+    padding: 10px; border-radius: 8px; min-height: 44px; border: 1px inset rgba(0,0,0,0.03);
+}
+
+.section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 25px 0 15px 0; padding-bottom: 10px; border-bottom: 1px dashed var(--border);
+}
+.section-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0; }
+
+.weight-zone .grid-auto-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+.weight-zone .interactive-pill { flex-direction: column; align-items: flex-start; padding: 15px; height: auto; border-radius: 12px; }
+.weight-zone .ipa-symbol-text { font-size: 1.4rem; margin-bottom: 8px; }
+
+.slider-box { width: 100%; }
+.slider-box .label-caps { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.slider-box input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+
+.item-actions .delete {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.2rem; padding: 8px; border-radius: 50%; transition: 0.2s;
+}
+.item-actions .delete:hover { background: rgba(220, 53, 69, 0.1); }
+
+/* ## [H2] 5.3 搜尋、工具列與內嵌編輯器 (Search & Editor) */
+.page-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; }
 .search-group { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
 .search-box {
     display: flex; align-items: center; background: #fff;
@@ -452,9 +419,6 @@
     border-radius: 8px; font-weight: 600; font-size: 0.9rem; white-space: nowrap;
 }
 
-/* ==========================================================================
-   11. 字典內嵌編輯器 (In-place Editor)
-   ========================================================================== */
 .inplace-input {
     width: 100%; height: 34px; padding: 6px 10px;
     border: 1px solid var(--border); border-radius: 6px;
@@ -470,41 +434,6 @@
 .btn-delete-sm { color: #bbb; }
 .btn-delete-sm:hover { color: #dc3545; }
 
-.font-bold { font-weight: 700; }
-.phonetic { font-family: "Segoe UI", "Lucida Sans Unicode", sans-serif; color: var(--primary); }
-.btn-primary { 
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
-    height: 40px; padding: 0 20px; border-radius: 8px; border: none;
-    background: var(--primary); color: white; font-weight: 600; cursor: pointer; transition: 0.2s;
-}
-.btn-primary:hover { background: #1557b0; transform: translateY(-1px); }
-
-/* ==========================================================================
-   12. 頂欄與全局操作按鈕 (Top Bar Actions)
-   ========================================================================== */
-.btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    height: 38px; padding: 0 20px; border-radius: 8px; border: 1px solid transparent;
-    font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.2s ease;
-    font-size: 0.9rem; line-height: 1; white-space: nowrap;
-}
-
-.btn-save {
-    background: var(--primary); color: white;
-    box-shadow: 0 2px 6px rgba(26, 115, 232, 0.2); border-color: var(--primary);
-}
-.btn-save:hover { background: #1557b0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3); }
-
-.btn-outline { background: white; border: 1px solid var(--border); color: var(--text-sub); }
-.btn-outline:hover { background: #f1f3f4; border-color: var(--text-sub); color: var(--text-main); }
-
-.lang-switcher { display: inline-flex; background: #eee; padding: 3px; border-radius: 8px; margin-right: 15px; border: 1px solid var(--border); }
-.btn-lang {
-    padding: 6px 14px; border: none; cursor: pointer; border-radius: 6px;
-    font-weight: 600; transition: 0.2s; font-size: 0.75rem; background: transparent; color: var(--text-sub);
-}
-.btn-lang.active, .btn-lang:hover { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
 .actions { display: flex; align-items: center; gap: 10px; }
 
 #overall-tab .sub-tabs-bar {
@@ -513,15 +442,14 @@
 }
 
 .sort-pool.tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    overflow-x: visible;
-    padding: 10px 5px;
-    border-bottom: none;
+    display: flex; flex-wrap: wrap; gap: 8px; overflow-x: visible;
+    padding: 10px 5px; border-bottom: none;
 }
+.sort-pool .tag-chip { flex-shrink: 0; margin: 0; }
 
-.sort-pool .tag-chip {
-    flex-shrink: 0;
-    margin: 0;
+/* ## [H2] 5.4 系統隱藏屬性 (Global Hidden Helpers) */
+.glass-pill input[type="checkbox"], 
+.glass-pill input[type="radio"],
+.table-ipa-item input[type="checkbox"] {
+    display: none;
 }

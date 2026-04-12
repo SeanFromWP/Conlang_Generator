@@ -8,7 +8,6 @@
             }
         </style>
         <div class="universal-guard-overlay">
-            {# 保留 i18n 標籤 #}
             <h2 id="guard-project-msg" data-i18n="alert_no_project_found">Loading...</h2>
         </div>
         <script>
@@ -30,20 +29,17 @@
 
 {% macro syntax_check_guard(config) %}
     {% if session.get('current_project') %}
-        {# 1. 極度防禦性的取值 #}
         {% set safe_cfg = config if config is mapping else {} %}
-        {% set univ_root = safe_cfg.get('sec_universal_features', {}) if safe_cfg is mapping else {} %}
-        {% set univ_bools = univ_root.get('bools', {}) if univ_root is mapping else {} %}
+        {% set univ_root = safe_cfg.get('sec_universal_features', {}) %}
+        {% set univ_bools = univ_root.get('bools', {}) %}
         
-        {# 2. 不用 values()，改用最笨但最穩的 for 迴圈來計算是否有功能被開啟 #}
         {% set ns = namespace(has_on=false) %}
         {% if univ_bools is mapping %}
             {% for k, v in univ_bools.items() %}
-                {% if v == true %}{% set ns.has_on = true %}{% endif %}
+                {% if v == true or v == 'true' %}{% set ns.has_on = true %}{% endif %}
             {% endfor %}
         {% endif %}
 
-        {# 3. 如果沒開任何功能，噴翻譯後的警告 #}
         {% if not ns.has_on %}
             <div id="guard-syntax-msg" data-i18n="alert_no_syntax_features" style="display:none;">Please set syntax features first.</div>
             <script>
@@ -63,22 +59,20 @@
     {% endif %}
 {% endmacro %}
 
-{# --- 3. 音標/音韻檢查守衛 (新加) --- #}
+{# --- 3. 音標/音韻檢查守衛 (對齊 inventory 結構) --- #}
 {% macro ipa_check_guard(config) %}
     {% if session.get('current_project') %}
         {% set safe_cfg = config if config is mapping else {} %}
-        {% set phon = safe_cfg.get('phonology', {}) if safe_cfg is mapping else {} %}
+        {% set phon = safe_cfg.get('phonology', {}) %}
         
-        {# 徹底避開 length 過濾器，改用 if 存在判斷 #}
-        {% set ipa_data = phon.get('ipa_list') if phon is mapping else None %}
+        {# 同時檢查 ipa_list 和 inventory，增加結構兼容性 #}
+        {% set ipa_data = phon.get('ipa_list', []) %}
+        {% set inventory_data = phon.get('inventory', []) %}
         
-        {# 如果 ipa_data 是 None 或者不是一個有東西的列表，就判定為沒有 IPA #}
+        {# 只要其中一個有東西，has_ipa 就是 true #}
         {% set has_ipa = false %}
-        {% if ipa_data and ipa_data is iterable %}
-            {# 如果裡面至少有一個元素，就設為 true #}
-            {% for item in ipa_data %}
-                {% set has_ipa = true %}
-            {% endfor %}
+        {% if (ipa_data is iterable and ipa_data) or (inventory_data is iterable and inventory_data) %}
+            {% set has_ipa = true %}
         {% endif %}
         
         {% if not has_ipa %}
@@ -88,13 +82,12 @@
                     window.addEventListener('load', () => {
                         setTimeout(() => {
                             const el = document.getElementById('guard-ipa-msg');
-                            // 優先抓翻譯，沒有就用硬編碼的中文備案
-                            const msg = (el && el.innerText.length > 5 && !el.innerText.includes('Loading')) 
+                            const msg = (el && el.innerText.trim() !== "" && !el.innerText.includes('Loading')) 
                                         ? el.innerText.trim() 
                                         : "⚠️ 目前還沒有設定音標資料！\n請先到「音標系統」頁面選取你的 IPA 符號並儲存。";
                             alert(msg);
                             window.location.href = "{{ url_for('views.ipa_tool') }}";
-                        }, 400);
+                        }, 450);
                     });
                 })();
             </script>

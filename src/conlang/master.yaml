@@ -16,7 +16,7 @@
       options: 
         - value: "align_nominative"
           impacts: "sec_universal_features|feat_case|case_nominative,sec_universal_features|feat_case|case_accusative"
-        - value: "align_ergative"
+        - value: "align_ergative" 
           impacts: "sec_universal_features|feat_case|case_ergative,sec_universal_features|feat_case|case_absolutive"
         - value: "align_tripartite"
           impacts: "sec_universal_features|feat_case|case_agentive,sec_universal_features|feat_case|case_patientive,sec_universal_features|feat_case|case_transitive"

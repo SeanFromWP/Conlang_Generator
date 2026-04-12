@@ -8,87 +8,18 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <style>
-        /* 佈局容器：左側導航與右側內容分離 */
-        .syntax-layout {
-            display: grid;
-            grid-template-columns: 260px 1fr;
-            gap: 30px;
-            margin-top: 20px;
-            height: calc(100vh - 200px);
-            min-height: 500px;
-        }
-
-        /* 左側導航欄 */
-        .syntax-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto;
-            padding-right: 12px;
-            border-right: 1px solid rgba(var(--text-rgb), 0.1);
-        }
-
-        .side-tab-btn {
-            padding: 14px 18px;
-            text-align: left;
-            border: none;
-            background: rgba(var(--text-rgb), 0.02);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-sub);
-            font-weight: 500;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .side-tab-btn:hover { 
-            background: rgba(var(--text-rgb), 0.06); 
-            transform: translateX(4px);
-        }
-
-        .side-tab-btn.active {
-            background: var(--primary);
-            color: #fff;
-            font-weight: 700;
-            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-        }
-
-        /* 右側主內容區 */
-        .syntax-main-content {
-            overflow-y: auto;
-            padding-right: 20px;
-            padding-bottom: 80px;
-            scroll-behavior: smooth;
-        }
-
+        .syntax-layout { display: grid; grid-template-columns: 260px 1fr; gap: 30px; margin-top: 20px; height: calc(100vh - 200px); min-height: 500px; }
+        .syntax-sidebar { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 12px; border-right: 1px solid rgba(var(--text-rgb), 0.1); }
+        .side-tab-btn { padding: 14px 18px; text-align: left; border: none; background: rgba(var(--text-rgb), 0.02); border-radius: 12px; cursor: pointer; transition: all 0.2s; color: var(--text-sub); font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+        .side-tab-btn.active { background: var(--primary); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3); }
+        .syntax-main-content { overflow-y: auto; padding-right: 20px; padding-bottom: 80px; scroll-behavior: smooth; }
         .section-view { display: none; }
-        .section-view.active { 
-            display: block; 
-            animation: slideUp 0.3s ease-out;
-        }
-
-        /* 排序池與鎖定樣式 */
-        .sort-pool { 
-            min-height: 80px; display: flex; flex-wrap: wrap; gap: 12px; padding: 20px;
-            background: rgba(var(--text-rgb), 0.03); border: 2px dashed rgba(var(--text-rgb), 0.1);
-            border-radius: 16px; transition: all 0.3s ease;
-        }
-        .is-locked { 
-            opacity: 0.5; cursor: not-allowed !important; 
-            filter: grayscale(1); pointer-events: none; 
-        }
-        
-        .sort-section-card {
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 16px; padding: 24px; margin-bottom: 24px;
-        }
-
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(15px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
+        .section-view.active { display: block; animation: slideUp 0.3s ease-out; }
+        .sort-pool { min-height: 80px; display: flex; flex-wrap: wrap; gap: 12px; padding: 20px; background: rgba(var(--text-rgb), 0.03); border: 2px dashed rgba(var(--text-rgb), 0.1); border-radius: 16px; }
+        .sort-section-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+        .is-locked { opacity: 0.5; cursor: not-allowed !important; filter: grayscale(1); pointer-events: none; }
+        .custom-pill-tag input { background: transparent; border: none; color: inherit; font-family: inherit; font-size: inherit; outline: none; width: 4ch; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 {% endblock %}
 
@@ -116,22 +47,6 @@
 <form id="syntax-form" method="POST">
     <input type="hidden" name="action_type" id="action-type" value="save">
 
-    <div id="order-preload-area" style="display:none;">
-        {% for sec_key, sec_val in config.items() if sec_key.startswith('sec_') %}
-            {% for key, val in sec_val.items() if val is iterable and val is not string %}
-                {% if key == 'settings' %}
-                    {% for feat_key, feat_val in val.items() %}
-                        <input type="hidden" id="hidden-order-settings-{{sec_key}}-{{feat_key}}" 
-                            name="order|settings|{{sec_key}}|{{feat_key}}" value="{{ feat_val | join(' ') }}">
-                    {% endfor %}
-                {% else %}
-                    <input type="hidden" id="hidden-order-{{sec_key}}-{{key}}" 
-                        name="order|{{sec_key}}|{{key}}" value="{{ val | join(' ') }}">
-                {% endif %}
-            {% endfor %}
-        {% endfor %}
-    </div>
-
     <div id="tab-config" class="tab-content active">
         <div class="syntax-layout">
             <aside class="syntax-sidebar">
@@ -141,7 +56,6 @@
                 </button>
                 {% endfor %}
             </aside>
-
             <main class="syntax-main-content">
                 {% for section, content in master.items() %}
                 <div id="view-{{ section }}" class="section-view">
@@ -158,21 +72,20 @@
 </form>
 
 <script>
-    // --- 標籤管理 (TagManager) ---
     const TagManager = {
-        updateWidth(input) { 
-            input.style.width = Math.max(input.value.length + 2, 4) + 'ch'; 
-        },
-        add(section, featId) {
+        updateWidth(input) { input.style.width = Math.max(input.value.length + 2, 4) + 'ch'; },
+        add(section, featId, prefix) {
             const container = document.getElementById(`options-container-${section}-${featId}`);
+            if (!container) return;
             const wrapper = document.createElement('div');
             wrapper.className = 'glass-pill custom-pill-tag';
             wrapper.innerHTML = `
-                <input type="text" name="settings|${section}|${featId}" placeholder="..." required autocomplete="off">
-                <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove(); SyntaxApp.syncState();">×</button>
+                <input type="text" name="${prefix}${section}|${featId}" placeholder="..." required autocomplete="off">
+                <button type="button" class="btn-tag-remove">×</button>
             `;
             const input = wrapper.querySelector('input');
             input.addEventListener('input', () => this.updateWidth(input));
+            wrapper.querySelector('.btn-tag-remove').onclick = () => { wrapper.remove(); SyntaxApp.syncState(); };
             container.insertBefore(wrapper, container.querySelector('.btn-tag-add'));
             this.updateWidth(input);
             input.focus();
@@ -180,17 +93,16 @@
         init() { document.querySelectorAll('.custom-pill-tag input').forEach(i => this.updateWidth(i)); }
     };
 
-    // --- 核心邏輯 (SyntaxApp) ---
     const SyntaxApp = {
         syncState() {
+            // 核心修復：這裏必須掃描當前 view 下所有的狀態
             const states = {};
-            // 1. 紀錄所有 Bool 開關狀態
             document.querySelectorAll('.bool-trigger').forEach(i => {
                 if(!states[i.dataset.section]) states[i.dataset.section] = {};
                 states[i.dataset.section][i.dataset.feature] = i.checked;
             });
 
-            // 2. 重置所有被鎖定的狀態
+            // 處理連動鎖定 (Alignment impacts)
             document.querySelectorAll('[data-locked-by]').forEach(el => {
                 el.disabled = false;
                 if (el.dataset.autoChecked === "true") el.checked = false;
@@ -199,189 +111,91 @@
                 el.closest('label')?.classList.remove('is-locked');
             });
 
-            // 3. 處理 Alignment 的自動連動 (Impacts)
             const alignment = document.querySelector('input[name*="feat_alignment"]:checked');
-            const impacts = alignment?.getAttribute('data-impacts');
-            
-            if (impacts) {
-                impacts.split(',').forEach(path => {
-                    const parts = path.trim().split('|');
-                    if(parts.length < 3) return;
-                    const [s, f, v] = parts;
-                    const target = document.querySelector(`input[name="settings|${s}|${f}"][value="${v}"]`);
+            if (alignment && alignment.dataset.impacts) {
+                alignment.dataset.impacts.split(',').forEach(path => {
+                    const target = document.querySelector(`input[name="settings|${path.trim().split('|')[0]}|${path.trim().split('|')[1]}"][value="${path.trim().split('|')[2]}"]`);
                     if (target) {
-                        if (!target.checked) {
-                            target.checked = true;
-                            target.setAttribute('data-auto-checked', 'true');
-                        }
+                        if (!target.checked) { target.checked = true; target.setAttribute('data-auto-checked', 'true'); }
                         target.disabled = true;
                         target.setAttribute('data-locked-by', 'feat_alignment');
                         target.closest('label')?.classList.add('is-locked');
-                        
-                        // 如果目標受開關控制且尚未開啟，則自動幫它開啟
-                        const trigger = document.querySelector(`.bool-trigger[data-section="${s}"][data-feature="${f}"]`);
-                        if (trigger && !trigger.checked) {
-                            trigger.checked = true;
-                            if(!states[s]) states[s] = {};
-                            states[s][f] = true;
-                        }
                     }
                 });
             }
 
-            // 4. 更新依賴區域顯示 (修正 Typology 消失的問題)
+            // 核心修復：控制顯示/隱藏的邏輯必須與 HTML 的 ID 生成完全對齊
             document.querySelectorAll('.dependent-section').forEach(el => {
-                const parts = el.id.split('-'); 
-                const sec = parts[1], feat = parts[2];
-                
-                // 檢查該功能是否有對應的 bool-trigger
-                const hasTrigger = document.querySelector(`.bool-trigger[data-section="${sec}"][data-feature="${feat}"]`);
-                
-                // 如果沒有開關 (如 Morphology Type)，預設 show 為 true
-                // 如果有開關，則讀取開關狀態
-                const show = hasTrigger ? (states[sec]?.[feat]) : true; 
-                
-                el.style.display = show ? 'block' : 'none';
+                const parts = el.id.replace('dep-', '').split('-'); // [section, feature]
+                const sec = parts[0], feat = parts[1];
+                const shouldShow = states[sec] && states[sec][feat] === true;
+                el.style.display = shouldShow ? 'block' : 'none';
             });
         }
     };
 
-    // --- 排序管理 (SortingManager) ---
     const SortingManager = {
         init() {
             const area = document.getElementById('sorting-area');
-            if (!area) return;
-            area.innerHTML = ''; 
-            const processedGroups = new Set();
-
-            const allActiveInputs = Array.from(document.querySelectorAll('#tab-config input')).filter(i => {
+            area.innerHTML = '';
+            // 抓取所有選中的 input (含自定義標籤)
+            const activeInputs = Array.from(document.querySelectorAll('#tab-config input')).filter(i => {
                 if (i.type === 'checkbox' || i.type === 'radio') return i.checked;
                 if (i.type === 'text' && i.closest('.custom-pill-tag')) return i.value.trim() !== '';
                 return false;
             });
 
-            allActiveInputs.forEach(item => {
-                const groupEl = item.closest('.dependent-section, .syntax-cat-group, .card-body');
-                if (!groupEl || processedGroups.has(groupEl)) return;
-                
-                // 排除目前被隱藏的區域
-                if (window.getComputedStyle(groupEl).display === 'none') return;
-                processedGroups.add(groupEl);
-
-                const parts = item.name.split('|');
-                const orderKey = (parts[0] === 'settings') ? parts.slice(0, 3).join('|') : parts.slice(0, 2).join('|');
-                const safeId = orderKey.replace(/\|/g, '-');
-
-                let hiddenInput = document.getElementById(`hidden-order-${safeId}`);
-                if (!hiddenInput) {
-                    hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.id = `hidden-order-${safeId}`;
-                    hiddenInput.name = `order|${orderKey}`;
-                    document.getElementById('syntax-form').appendChild(hiddenInput);
+            const groups = new Set();
+            activeInputs.forEach(input => {
+                const container = input.closest('.tag-container');
+                if (container && !groups.has(container)) {
+                    groups.add(container);
+                    this.renderSortCard(container, area);
                 }
-
-                const currentSelections = Array.from(groupEl.querySelectorAll('input')).filter(i => {
-                    if (i.type === 'checkbox' || i.type === 'radio') return i.checked;
-                    if (i.type === 'text' && i.closest('.custom-pill-tag')) return i.value.trim() !== '';
-                    return false;
-                }).map(i => i.value.trim());
-
-                let sortedArray = (hiddenInput.value || "").split(/\s+/).filter(v => v && currentSelections.includes(v));
-                currentSelections.forEach(v => { if (!sortedArray.includes(v)) sortedArray.push(v); });
-                hiddenInput.value = sortedArray.join(' ');
-
-                const card = document.createElement('div');
-                card.className = 'sort-section-card';
-                card.innerHTML = `
-                    <div class="sort-section-title" style="margin-bottom:15px; font-weight:700;">
-                        <span data-i18n="${orderKey.split('|').pop()}"></span>
-                        <small style="color:var(--text-sub); margin-left:10px;" data-i18n="hint_drag_sort"></small>
-                    </div>
-                    <div class="sort-pool" id="pool-${safeId}"></div>
-                `;
-                const pool = card.querySelector('.sort-pool');
-
-                sortedArray.forEach(val => {
-                    const chip = document.createElement('div');
-                    chip.className = 'glass-pill sort-item';
-                    chip.dataset.val = val;
-                    chip.draggable = true;
-
-                    const originInput = Array.from(groupEl.querySelectorAll('input')).find(i => i.value === val);
-                    const stack = originInput?.closest('label')?.querySelector('.bilingual-stack')?.cloneNode(true);
-                    
-                    if (stack) chip.appendChild(stack);
-                    else chip.innerHTML = `<div class="bilingual-stack"><span>${val}</span></div>`;
-
-                    chip.addEventListener('dragstart', () => chip.classList.add('sortable-chosen'));
-                    chip.addEventListener('dragend', () => {
-                        chip.classList.remove('sortable-chosen');
-                        hiddenInput.value = Array.from(pool.querySelectorAll('.sort-item')).map(c => c.dataset.val).join(' ');
-                    });
-                    pool.appendChild(chip);
-                });
-
-                pool.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    const dragging = document.querySelector('.sortable-chosen');
-                    if (!dragging || !pool.contains(dragging)) return;
-                    const afterElement = Array.from(pool.querySelectorAll('.sort-item:not(.sortable-chosen)')).find(el => {
-                        const box = el.getBoundingClientRect();
-                        return e.clientX < box.left + box.width / 2;
-                    });
-                    afterElement ? pool.insertBefore(dragging, afterElement) : pool.appendChild(dragging);
-                });
-
-                area.appendChild(card);
             });
             if (window.applyTranslations) applyTranslations();
+        },
+        renderSortCard(container, area) {
+            const cardId = container.id.replace('options-container-', '');
+            const card = document.createElement('div');
+            card.className = 'sort-section-card';
+            card.innerHTML = `<div class="label-caps" data-i18n="${cardId.split('-')[1]}"></div><div class="sort-pool" id="pool-${cardId}"></div>`;
+            const pool = card.querySelector('.sort-pool');
+            
+            // 獲取該容器內所有選中值
+            const vals = Array.from(container.querySelectorAll('input')).filter(i => (i.checked || (i.type==='text' && i.value))).map(i => i.value);
+            vals.forEach(v => {
+                const chip = document.createElement('div');
+                chip.className = 'glass-pill';
+                chip.textContent = v;
+                pool.appendChild(chip);
+            });
+            area.appendChild(card);
         }
     };
 
-    // --- 分頁切換與導航 ---
     window.switchMainTab = id => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-        document.querySelectorAll('.tab-content').forEach(c => {
-            c.style.display = (c.id === `tab-${id}`) ? 'block' : 'none';
-        });
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = (c.id === `tab-${id}`) ? 'block' : 'none');
         if (id === 'sorting') SortingManager.init();
-        if (id === 'config') restoreSideTab();
     };
 
     window.switchSideTab = (sectionKey) => {
         document.querySelectorAll('.side-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionKey));
         document.querySelectorAll('.section-view').forEach(view => view.classList.toggle('active', view.id === `view-${sectionKey}`));
         localStorage.setItem('last_syntax_side_tab', sectionKey);
-        
-        // 切換側邊欄後重新執行同步，確保顯示狀態正確
         SyntaxApp.syncState();
     };
 
     function restoreSideTab() {
-        const lastSide = localStorage.getItem('last_syntax_side_tab');
-        const target = lastSide ? document.querySelector(`.side-tab-btn[data-section="${lastSide}"]`) : document.querySelector('.side-tab-btn');
-        if (target) target.click();
+        const last = localStorage.getItem('last_syntax_side_tab');
+        (document.querySelector(`.side-tab-btn[data-section="${last}"]`) || document.querySelector('.side-tab-btn')).click();
     }
 
-    window.clearAllSettings = () => {
-        if (confirm("確定清空當前所有填寫的內容與開關？（保留語法結構）")) {
-            alert("功能暫時不可用");
-        }
-    };
+    window.clearAllSettings = () => { if(confirm("Clear all?")) { document.getElementById('action-type').value = 'reset'; document.getElementById('syntax-form').submit(); }};
 
-    // 初始化
-    document.addEventListener('DOMContentLoaded', () => { 
-        TagManager.init(); 
-        restoreSideTab();
-        SyntaxApp.syncState(); 
-    });
-
-    document.getElementById('syntax-form').addEventListener('change', (e) => {
-        if (document.getElementById('tab-config').style.display !== 'none') {
-            SyntaxApp.syncState();
-        }
-    });
+    document.addEventListener('DOMContentLoaded', () => { TagManager.init(); restoreSideTab(); });
+    document.getElementById('syntax-form').addEventListener('change', () => SyntaxApp.syncState());
 </script>
 {{ end_guard() }}
 {% endblock %}

@@ -74,7 +74,7 @@
 | **L** | Liquids/Approximants | 流音、近音、顫音 (如 l, r, j, w) |
 | **B** | Labials | 雙唇音、唇齒音 (唇部發音) |
 | **K** | Coronals | 齒音、齒齦音、齒齦後音 (舌尖/舌葉發音) |
-| **G** | Gutturals/Back | 軟顎音、小舌音、喉音 (後部發音) |
+| **G** | Gutturals/Back | 軟腭音、小舌音、喉音 (後部發音) |
 | **S** | Sibilants | 噝音 (具有高頻特徵的擦音) |
 | **O** | Others | 其他未歸類之音素 |
 

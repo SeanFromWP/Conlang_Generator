@@ -200,8 +200,8 @@ def syntax():
         return redirect(url_for('views.syntax'))
     return render_template('syntax.html', master=master, config=config)
 
-@views_bp.route('/morphology', methods=['GET', 'POST'])
-def morphology_mgr():
+@views_bp.route('/morphology/inflectional', methods=['GET', 'POST'])
+def morph_inflectional():
     config, _ = utils.get_config()
     if request.method == 'POST':
         new_morphology = {}
@@ -221,8 +221,55 @@ def morphology_mgr():
         
         config['morphology'] = new_morphology
         utils.save_config(config)
-        return redirect(url_for('views.morphology_mgr'))
-    return render_template('morphology.html', config=config)
+        return redirect(url_for('views.morph_inflectional'))
+    return render_template('morph_inflectional.html', config=config)
+
+@views_bp.route('/morphology/agglutinative', methods=['GET', 'POST'])
+def morph_agglutinative():
+    config, _ = utils.get_config()
+    if request.method == 'POST':
+        # 確保結構存在
+        if 'morphology' not in config: config['morphology'] = {}
+        
+        # 我們直接覆寫 agglutinative 節點，這樣沒在表單裡的（被刪掉的）就不會留下殘留
+        new_agglut = {}
+        
+        # 獲取所有可能的 section
+        sections = ['sec_noun_syntax', 'sec_verb_syntax', 'sec_adj_syntax']
+        
+        for key in request.form:
+            # 格式: agglut|sec|feat|opt|base
+            if key.startswith('agglut|') and key.endswith('|base'):
+                parts = key.split('|')
+                sec, feat, opt = parts[1], parts[2], parts[3]
+                
+                base_val = request.form.get(key, '').strip()
+                
+                # 即使 base 是空的，只要用戶有在頁面上看到這個項，我們就建立結構
+                # 這樣「刪除內容」才會真正生效（覆蓋掉舊的詞綴）
+                conds = request.form.getlist(f"agglut|{sec}|{feat}|{opt}|cond[]")
+                customs = request.form.getlist(f"agglut|{sec}|{feat}|{opt}|custom[]")
+                alts = request.form.getlist(f"agglut|{sec}|{feat}|{opt}|alt[]")
+                
+                rules = []
+                for c, cust, a in zip(conds, customs, alts):
+                    if a.strip(): # 只有變體詞綴不為空時才存規則
+                        rules.append({
+                            'cond': c,
+                            'custom': cust.strip() if c == 'custom' else '',
+                            'alt': a.strip()
+                        })
+                
+                new_agglut.setdefault(sec, {}).setdefault(feat, {})[opt] = {
+                    'base': base_val,
+                    'rules': rules
+                }
+        
+        config['morphology']['agglutinative'] = new_agglut
+        utils.save_config(config)
+        return redirect(url_for('views.morph_agglutinative'))
+        
+    return render_template('morph_agglutinative.html', config=config)
 
 # --- 3. 字典與詞庫 ---
 @views_bp.route('/lexicon')

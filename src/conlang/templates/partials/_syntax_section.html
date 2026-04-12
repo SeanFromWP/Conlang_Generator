@@ -3,110 +3,137 @@
 </div>
 
 <div class="card">
-    {# --- 1. 功能特性開關 (bools) --- #}
-    {% if content.bools %}
+    {% if content.bools is defined and content.bools is iterable %}
         <div class="label-caps" data-i18n="label_features"></div>
         <div class="tag-container" style="margin-bottom:25px;">
             {% for feat_key in content.bools %}
-                {# 邏輯修正：確保 Universal 的 Person 預設唯讀且勾選 #}
-                {% set is_person_readonly = (section == 'sec_universal_features' and feat_key == 'feat_person') %}
-                <label class="glass-pill {% if is_person_readonly %}readonly-pill{% endif %}">
+                <label class="glass-pill">
                     <input type="checkbox" class="bool-trigger" 
                            data-section="{{section}}" data-feature="{{feat_key}}"
                            name="bools|{{section}}|{{feat_key}}" 
-                           {% if is_person_readonly or (config[section] and config[section]['bools'] and config[section]['bools'][feat_key]) %}checked{% endif %}
-                           {% if is_person_readonly %}disabled{% endif %}>
+                           {% if config[section] and config[section]['bools'] and config[section]['bools'][feat_key] %}checked{% endif %}>
                     <div class="bilingual-stack"><span data-i18n="{{feat_key}}"></span></div>
                 </label>
             {% endfor %}
         </div>
     {% endif %}
 
-    {# --- 2. 根目錄分類選項 (如 Word Order, Morphology) --- #}
-    {% for cat, data in content.items() if cat not in ['bools', 'settings'] and data.options %}
-        <div style="margin-top:20px;">
-            <div class="label-caps" data-i18n="{{cat}}"></div>
-            <div class="tag-container">
-                {% for opt in data.options %}
-                    {% set is_dict = opt is mapping %}
-                    {% set opt_val = opt.value if is_dict else opt %}
-                    {% set opt_impact = opt.impact | join(',') if (is_dict and opt.impact) else "" %}
-                    
-                    <label class="glass-pill">
-                        <input type="{{ 'radio' if data.type == 'single' else 'checkbox' }}" 
-                               name="{{section}}|{{cat}}" 
-                               value="{{opt_val}}"
-                               {% if opt_impact %} data-impacts="{{ opt_impact }}" {% endif %}
-                               {% if config[section] and config[section][cat] and (opt_val in config[section][cat] if config[section][cat] is iterable else opt_val == config[section][cat]) %}checked{% endif %}>
-                        <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
-                    </label>
-                {% endfor %}
+    {% for k, v in content.items() if k not in ['bools', 'settings'] and v is mapping %}
+        {% set is_dep = content.bools is defined and k in content.bools %}
+        <div class="sub-feature-card {% if is_dep %}dependent-section{% endif %}" 
+             id="dep-{{ section }}-{{ k }}"
+             {% if is_dep and not (config[section] and config[section]['bools'] and config[section]['bools'][k]) %} style="display:none;" {% endif %}>
+            
+            <div class="label-caps" style="color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 5px; margin-bottom: 15px;" data-i18n="{{k}}"></div>
+            <div id="options-container-{{ section }}-{{ k }}" class="tag-container">
+                
+                {% set root_pool = [] %}
+
+                {% if v.groups %}
+                    {% for g_id, g_opts in v.groups.items() %}
+                        <div class="group-header" style="width:100%; margin:10px 0 5px; font-weight:bold; font-size:0.8rem; color: var(--text-sub);" data-i18n="{{g_id}}"></div>
+                        {% for opt in g_opts %}
+                            {% set val = opt.value if opt is mapping else opt %}
+                            {% set _ = root_pool.append(val) %}
+                            <label class="glass-pill">
+                                <input type="{{ 'radio' if v.type == 'single' else 'checkbox' }}" 
+                                       name="root|{{ section }}|{{ k }}" value="{{ val }}"
+                                       {% if config[section] and val in (config[section][k] if config[section][k] is iterable and config[section][k] is not string else [config[section][k]]) %}checked{% endif %}>
+                                <div class="bilingual-stack"><span data-i18n="{{val}}"></span></div>
+                            </label>
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if v.options %}
+                    {% for opt in v.options %}
+                        {% set val = opt.value if opt is mapping else opt %}
+                        {% set _ = root_pool.append(val) %}
+                        <label class="glass-pill">
+                            <input type="{{ 'radio' if v.type == 'single' else 'checkbox' }}" 
+                                   name="root|{{ section }}|{{ k }}" value="{{ val }}"
+                                   {% if config[section] and val in (config[section][k] if config[section][k] is iterable and config[section][k] is not string else [config[section][k]]) %}checked{% endif %}>
+                            <div class="bilingual-stack"><span data-i18n="{{val}}"></span></div>
+                        </label>
+                    {% endfor %}
+                {% endif %}
+
+                {% if config[section] and config[section][k] %}
+                    {% set saved = config[section][k] if config[section][k] is iterable and config[section][k] is not string else ([config[section][k]] if config[section][k] else []) %}
+                    {% for s_val in saved if s_val not in root_pool and s_val != "" %}
+                        <div class="glass-pill custom-pill-tag">
+                            <input type="text" name="root|{{ section }}|{{ k }}" value="{{ s_val }}" oninput="TagManager.updateWidth(this)">
+                            <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove(); SyntaxApp.syncState();">×</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <button type="button" class="btn-tag-add" onclick="TagManager.add('{{ section }}', '{{ k }}', 'root|')">+ <span data-i18n="btn_add_custom"></span></button>
             </div>
         </div>
     {% endfor %}
 
-    {# --- 3. 細項設定 (Settings) --- #}
-    {% if content.settings %}
-        {% for subfeat_key, info in content.settings.items() %}
-            {# 核心修正：只處理真正的功能項，跳過配置用的 metadata #}
-            {% if subfeat_key not in ['type', 'options'] %}
-                <div class="dependent-section" id="dep-{{ section }}-{{ subfeat_key }}" 
-                    style="display: {% if config[section] and config[section]['bools'] and config[section]['bools'][subfeat_key] %}block{% else %}none{% endif %}; margin-bottom: 25px;">
+    {% if content.settings is mapping %}
+        {% for k, v in content.settings.items() if v is mapping %}
+            {% set is_dep = content.bools is defined and k in content.bools %}
+            <div class="sub-feature-card {% if is_dep %}dependent-section{% endif %}" 
+                 id="dep-{{ section }}-{{ k }}"
+                 {% if is_dep and not (config[section] and config[section]['bools'] and config[section]['bools'][k]) %} style="display:none;" {% endif %}>
+                
+                <div class="label-caps" style="color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 5px; margin-bottom: 15px;" data-i18n="{{k}}"></div>
+                <div id="options-container-{{ section }}-{{ k }}" class="tag-container">
                     
-                    <div class="label-caps" style="color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 5px; margin-bottom: 15px;" data-i18n="{{subfeat_key}}"></div>
+                    {% set settings_pool = [] %}
 
-                    {# 將所有標籤與新增按鈕全部放在同一個 Flex 容器內 #}
-                    <div id="options-container-{{ section }}-{{ subfeat_key }}" class="tag-container" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                        
-                        {# --- A: 預設選項 (Groups 或 Options) --- #}
-                        {% if info.groups %}
-                            {% for group_key, group_options in info.groups.items() %}
-                                {% for opt in group_options %}
-                                    {% set opt_val = opt.value if opt is mapping else opt %}
-                                    <label class="glass-pill">
-                                        <input type="checkbox" name="settings|{{ section }}|{{ subfeat_key }}" value="{{ opt_val }}"
-                                            {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and opt_val in config[section]['settings'][subfeat_key] %}checked{% endif %}>
-                                        <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
-                                    </label>
-                                {% endfor %}
-                            {% endfor %}
-                        {% elif info.options %}
-                            {% for opt in info.options %}
-                                {% set opt_val = opt.value if opt is mapping else opt %}
+                    {% if v.groups %}
+                        {% for g_id, g_opts in v.groups.items() %}
+                            <div class="group-header" style="width:100%; margin:10px 0 5px; font-weight:bold; font-size:0.8rem; color: var(--text-sub);" data-i18n="{{g_id}}"></div>
+                            {% for opt in g_opts %}
+                                {% set val = opt.value if opt is mapping else opt %}
+                                {% set _ = settings_pool.append(val) %}
                                 <label class="glass-pill">
-                                    <input type="{{ 'radio' if info.type == 'single' else 'checkbox' }}" 
-                                        name="settings|{{ section }}|{{ subfeat_key }}" value="{{ opt_val }}"
-                                        {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] and (opt_val in config[section]['settings'][subfeat_key] if config[section]['settings'][subfeat_key] is iterable else opt_val == config[section]['settings'][subfeat_key]) %}checked{% endif %}>
-                                    <div class="bilingual-stack"><span data-i18n="{{opt_val}}"></span></div>
+                                    <input type="{{ 'radio' if v.type == 'single' else 'checkbox' }}" 
+                                           name="settings|{{ section }}|{{ k }}" value="{{ val }}"
+                                           {% if config[section] and config[section].get('settings') %}
+                                               {% set saved = config[section]['settings'].get(k) %}
+                                               {% if val in (saved if saved is iterable and saved is not string else [saved]) %}checked{% endif %}
+                                           {% endif %}>
+                                    <div class="bilingual-stack"><span data-i18n="{{val}}"></span></div>
                                 </label>
                             {% endfor %}
-                        {% endif %}
+                        {% endfor %}
+                    {% endif %}
 
-                        {# --- B: 已保存的自定義標籤 (也在同一排) --- #}
-                        {% if config[section] and config[section]['settings'] and config[section]['settings'][subfeat_key] %}
-                            {% set defaults = [] %}
-                            {% if info.options %}{% for o in info.options %}{% set _ = defaults.append(o.value if o is mapping else o) %}{% endfor %}{% endif %}
-                            {% if info.groups %}{% for gk, go in info.groups.items() %}{% for o in go %}{% set _ = defaults.append(o.value if o is mapping else o) %}{% endfor %}{% endfor %}{% endif %}
+                    {% if v.options %}
+                        {% for opt in v.options %}
+                            {% set val = opt.value if opt is mapping else opt %}
+                            {% set _ = settings_pool.append(val) %}
+                            <label class="glass-pill">
+                                <input type="{{ 'radio' if v.type == 'single' else 'checkbox' }}" 
+                                       name="settings|{{ section }}|{{ k }}" value="{{ val }}"
+                                       {% if config[section] and config[section].get('settings') %}
+                                           {% set saved = config[section]['settings'].get(k) %}
+                                           {% if val in (saved if saved is iterable and saved is not string else [saved]) %}checked{% endif %}
+                                       {% endif %}>
+                                <div class="bilingual-stack"><span data-i18n="{{val}}"></span></div>
+                            </label>
+                        {% endfor %}
+                    {% endif %}
 
-                            {% for saved_val in config[section]['settings'][subfeat_key] %}
-                                {% if saved_val not in defaults %}
-                                <div class="glass-pill custom-pill-tag" style="display: flex; align-items: center;">
-                                    <input type="text" name="settings|{{ section }}|{{ subfeat_key }}" value="{{ saved_val }}" 
-                                        oninput="TagManager.updateWidth(this)" style="width: {{ (saved_val|length + 2) }}ch;">
-                                    <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove(); SyntaxApp.syncState();">×</button>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
+                    {% if config[section] and config[section].get('settings') %}
+                        {% set saved = config[section]['settings'].get(k) %}
+                        {% set saved_list = saved if saved is iterable and saved is not string else ([saved] if saved else []) %}
+                        {% for s_val in saved_list if s_val not in settings_pool and s_val != "" %}
+                            <div class="glass-pill custom-pill-tag">
+                                <input type="text" name="settings|{{ section }}|{{ k }}" value="{{ s_val }}" oninput="TagManager.updateWidth(this)">
+                                <button type="button" class="btn-tag-remove" onclick="this.parentElement.remove(); SyntaxApp.syncState();">×</button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
 
-                        {# --- C: 新增按鈕 (也在同一排) --- #}
-                        <button type="button" class="btn-tag-add" onclick="TagManager.add('{{ section }}', '{{ subfeat_key }}')" 
-                                style="border: 1px dashed var(--primary); background: transparent; color: var(--primary); padding: 5px 15px; border-radius: 20px; cursor: pointer;">
-                            + <span data-i18n="btn_add_custom"></span>
-                        </button>
-                    </div>
+                    <button type="button" class="btn-tag-add" onclick="TagManager.add('{{ section }}', '{{ k }}', 'settings|')">+ <span data-i18n="btn_add_custom"></span></button>
                 </div>
-            {% endif %}
+            </div>
         {% endfor %}
     {% endif %}
 </div>
